@@ -1,0 +1,33 @@
+{
+  "name": "osmium",
+  "version": "0.0.1",
+  "description": "Diffrent js lib",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HuMMeRSI/osmium.js.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/HuMMeRSI/osmium.js/issues"
+  },
+  "homepage": "https://github.com/HuMMeRSI/osmium.js#readme",
+  "devDependencies": {
+    "eslint": "^6.0.1",
+    "eslint-config-google": "^0.13.0",
+    "htmlparser2": "^3.10.1",
+    "prettier": "^1.18.2"
+  },
+  "dependencies": {
+    "normalize-html-whitespace": "^1.0.0",
+    "parse5": "^5.1.0",
+    "rehype-parse": "^6.0.1",
+    "unified": "^8.0.1",
+    "unified-stream": "^1.0.5",
+    "xml2js": "^0.4.19"
+  }
+}
