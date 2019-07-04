@@ -5,7 +5,7 @@ module.exports = `
 		\${name}
 		\${day}
 		
-		<osim3 name="\${name}" day="3"/>
+		<osim3 name="\${name}" day="3"></osim3>
 	</div>
 </template>
 

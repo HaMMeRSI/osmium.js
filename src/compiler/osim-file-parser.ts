@@ -18,16 +18,15 @@ function extractPart(part, osim): string {
 function parseToDocument(osimFileText, baseDir): IOsimDocument {
 	const { imports, components, html }: IOsimTemplateObject = processTemplate(extractPart('template', osimFileText));
 	const subComponents: SubDocuments = {};
+
 	if (imports.length > 0) {
-		imports.reduce((acc, imported): SubDocuments => {
+		for (const imported of imports) {
 			const filePath: string = imported.match(importFile)[0];
 			const compName: string = imported.match(importedElements)[0];
 			const pathR = path.resolve(baseDir, filePath);
 			const file = require(pathR);
-			acc[compName] = parseToDocument(file, path.dirname(pathR));
-
-			return acc;
-		}, subComponents);
+			subComponents[compName] = parseToDocument(file, path.dirname(pathR));
+		}
 	}
 
 	return {
