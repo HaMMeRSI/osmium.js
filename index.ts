@@ -1,10 +1,22 @@
-import mainOsim from './osim-component';
-import subOsim from './osim2-component';
-import osimFileParser from './compiler/osim-file-parser';
-import buildComponent from './compiler/template/build-component';
+import buildComponent from './src/compiler/template/build-component';
+import * as path from 'path';
+import { parseToDocument } from './src/compiler/osim-file-parser';
 
-const mainOsimDocument = osimFileParser(mainOsim);
-const subOsimDocument = osimFileParser(subOsim);
+const mainOsim = `
+<template>
+	import osim2 from './osim2-component.js';
+	import osim3 from './osim3-component.js';
 
-console.log(mainOsimDocument.template.imports);
-console.log(buildComponent(mainOsimDocument.template.html));
+	<osim2 name="\${name}" day="3"/>
+	<osim3 name="\${name}" day="3"/>
+</template>
+
+<script>
+	export default (modifires, props) => {
+
+	}
+</script>`;
+
+const mainOsimDocument = parseToDocument(mainOsim, path.resolve(process.cwd(), './src'));
+
+// console.log(buildComponent(mainOsimDocument.template));

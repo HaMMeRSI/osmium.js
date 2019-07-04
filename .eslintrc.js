@@ -3,19 +3,21 @@ module.exports = {
 	env: {
 		node: true,
 		es6: true,
+		browser: true,
 	},
 	extends: ['google', 'plugin:@typescript-eslint/recommended', 'prettier/@typescript-eslint', 'plugin:prettier/recommended'],
 	globals: {
 		Atomics: 'readonly',
 		SharedArrayBuffer: 'readonly',
-		document: 'readonly',
 	},
 	parserOptions: {
 		ecmaVersion: 2018,
 		sourceType: 'module',
 	},
 	rules: {
+		'@typescript-eslint/no-var-requires': 0,
 		'@typescript-eslint/interface-name-prefix': [1, 'always'],
+		'@typescript-eslint/prefer-interface': 0,
 		'linebreak-style': 0,
 		indent: ['error', 'tab'],
 		'no-tabs': 0,
