@@ -1,4 +1,4 @@
-module.exports = `
+export default `
 <template>
 	<div class='wefwef fwefw' id='wefwef'>
 		3      3

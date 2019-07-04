@@ -1,5 +1,6 @@
 export default (tagName = 'div', attrs = [], childs = []) => {
-	element = document.createElement(tagName);
+	const modifiers = {};
+	const element = document.createElement(tagName);
 
 	attrs.forEach(([name, value]) => {
 		const dyn = value.match(/(?<=\$\{).*?(?=})/);
@@ -12,5 +13,5 @@ export default (tagName = 'div', attrs = [], childs = []) => {
 		}
 	});
 
-	childs.forEach((child) => fragment.appendChild(child));
+	childs.forEach((child) => element.appendChild(child));
 };
