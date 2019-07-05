@@ -33,7 +33,7 @@ export interface IHastObjectAttributes {
 	[name: string]: string;
 }
 
-export interface IOsimTemplateAttributes {
+export interface ISortedAttributes {
 	staticProps: IHastObjectAttributes;
 	dynamicProps: IHastObjectAttributes;
 }

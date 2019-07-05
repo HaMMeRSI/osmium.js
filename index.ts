@@ -1,8 +1,9 @@
+import { HastTree } from './src/compiler/compiler-interfaces';
 import buildComponent from './src/compiler/template/build-component';
 import * as path from 'path';
 import { parseToDocument } from './src/compiler/osim-file-parser';
-import { collapseTemplate } from './src/compiler/template/collapse-template';
-
+import { collapseOsimDocument } from './src/compiler/template/collapse-template';
+import * as parse5 from 'parse5';
 const mainOsim = `
 <template>
 	import osim2 from './osim2-component.js';
@@ -14,10 +15,12 @@ const mainOsim = `
 
 <script>
 	export default (modifires, props) => {
-
+		modifiers['name']('sagi')
 	}
 </script>`;
 
 const mainOsimDocument = parseToDocument(mainOsim, path.resolve(process.cwd(), './src'));
-const newt = collapseTemplate(mainOsimDocument);
+const collapsedHast: HastTree = collapseOsimDocument(mainOsimDocument);
+const newt: string = parse5.serialize(collapsedHast);
+console.log(collapsedHast, '\n', newt);
 // console.log(buildComponent(mainOsimDocument.template));

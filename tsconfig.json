@@ -8,6 +8,9 @@
 		"alwaysStrict": true,
 		"allowSyntheticDefaultImports": true,
 		"incremental": true,
-		"typeRoots": ["./node_modules/@types/"]
-	}
+		"typeRoots": ["./node_modules/@types/"],
+		"isolatedModules": true,
+		"skipLibCheck": true
+	},
+	"exclude": ["node_modules", "out"]
 }

@@ -6,6 +6,7 @@ module.exports = `
 		{{day}}
 		
 		<osim3 name="{{name}}" day="3"></osim3>
+		<input value="{{name}}"/>
 	</div>
 </template>
 
