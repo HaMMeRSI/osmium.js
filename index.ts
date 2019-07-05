@@ -8,8 +8,8 @@ const mainOsim = `
 	import osim2 from './osim2-component.js';
 	import osim3 from './osim3-component.js';
 
-	<osim2 name="\${name}" day="3"></osim2>
-	<osim3 name="\${name}" day="3"></osim3>
+	<osim2 name="{{name}}" day="3"></osim2>
+	<osim3 name="{{name}}" day="3"></osim3>
 </template>
 
 <script>

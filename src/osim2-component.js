@@ -1,11 +1,11 @@
 module.exports = `
 <template>
 	import osim3 from './osim3-component.js';
-	<div class='osm2' id='osim22'>
-		\${name}
-		\${day}
+	<div class='osm2' id='osim22' value="{{day}}">
+		{{name}}
+		{{day}}
 		
-		<osim3 name="\${name}" day="3"></osim3>
+		<osim3 name="{{name}}" day="3"></osim3>
 	</div>
 </template>
 

@@ -1,4 +1,4 @@
-import { dynamicAttribute } from '../../../consts/regexes';
+import { matchModifierName } from '../../../consts/regexes';
 import { IOsimNode, IModifiers } from '../../compiler-interfaces';
 
 export default (tagName = 'div', attrs = [], childs = []): IOsimNode => {
@@ -6,7 +6,7 @@ export default (tagName = 'div', attrs = [], childs = []): IOsimNode => {
 	const element = document.createElement(tagName);
 
 	attrs.forEach(([name, value]): void => {
-		const dyn = value.match(dynamicAttribute);
+		const dyn = value.match(matchModifierName);
 		if (dyn) {
 			// TODO: function for debounce queue
 			// modifiers[name] = (newValue) => () => element.setAttribute(name, newValue);

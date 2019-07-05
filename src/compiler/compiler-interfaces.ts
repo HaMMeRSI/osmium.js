@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export type SubDocuments = { [name: string]: IOsimDocument };
 
 export interface IOsimTemplateObject {
@@ -22,3 +23,19 @@ export interface IOsimNode {
 	modifiers?: IModifiers;
 	dom: HTMLElement | Text | DocumentFragment;
 }
+
+export interface IHastAttribute {
+	name: string;
+	value: string;
+}
+
+export interface IHastObjectAttributes {
+	[name: string]: string;
+}
+
+export interface IOsimTemplateAttributes {
+	staticProps: IHastObjectAttributes;
+	dynamicProps: IHastObjectAttributes;
+}
+
+export type HastTree = any;

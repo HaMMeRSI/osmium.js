@@ -1,8 +1,8 @@
 module.exports = `
 <template>
 	<div class='osim3' id='osim33'>
-		\${name}
-		\${day}
+		{{name}}
+		{{day}}
 	</div>
 </template>
 
