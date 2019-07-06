@@ -7,35 +7,49 @@ export interface IOsimTemplateObject {
 	html: string;
 }
 
+export interface IOsimRootDocument {
+	mainDocument: IOsimDocument;
+	subDocuments: SubDocuments;
+}
+
 export interface IOsimDocument {
 	html: string;
 	components: string[];
 	script: string;
 	style: string;
-	subDocuments: SubDocuments;
 }
 
+export type ModifierAction = (newValue) => () => void;
+
 export interface IModifiers {
-	[attribute: string]: (newValue) => void;
+	[component: string]: {
+		[modifier: string]: ModifierAction;
+	};
 }
 
 export interface IOsimNode {
-	modifiers?: IModifiers;
-	dom: HTMLElement | Text | DocumentFragment;
+	modifiers: IModifiers;
+	dom: Node;
 }
 
 export interface IHastAttribute {
+	[Symbol.iterator]();
 	name: string;
 	value: string;
 }
 
-export interface IHastObjectAttributes {
-	[name: string]: string;
+export interface IOsimPropModifier {
+	componentScope: string;
+	value: string;
 }
 
-export interface ISortedAttributes {
+export interface IHastObjectAttributes {
+	[name: string]: IOsimPropModifier;
+}
+
+export interface ISortedParentProps {
 	staticProps: IHastObjectAttributes;
 	dynamicProps: IHastObjectAttributes;
 }
 
-export type HastTree = any;
+export type Hast = any;

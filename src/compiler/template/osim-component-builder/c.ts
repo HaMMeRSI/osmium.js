@@ -14,5 +14,6 @@ export default (component: componentBuilder, props, children): IOsimNode => {
 
 	return {
 		dom: fragment,
+		modifiers: {},
 	};
 };

@@ -28,6 +28,7 @@
 		"typescript": "^3.5.2"
 	},
 	"dependencies": {
-		"parse5": "^5.1.0"
+		"parse5": "^5.1.0",
+		"uniqid": "^5.0.3"
 	}
 }

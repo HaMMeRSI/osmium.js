@@ -4,5 +4,5 @@ export default (childs = []): IOsimNode => {
 	const fragment = document.createDocumentFragment();
 	childs.forEach((child): void => fragment.appendChild(child));
 
-	return { dom: fragment };
+	return { dom: fragment, modifiers: {} };
 };

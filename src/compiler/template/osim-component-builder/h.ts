@@ -1,25 +1,26 @@
+import { addModifier } from './addModifier';
 import { matchModifierName } from '../../../consts/regexes';
-import { IOsimNode, IModifiers } from '../../compiler-interfaces';
+import { IOsimNode, IModifiers, IHastAttribute } from '../../compiler-interfaces';
 
-export default (tagName = 'div', attrs = [], childs = []): IOsimNode => {
+export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: IOsimNode[] = []): IOsimNode => {
 	const modifiers: IModifiers = {};
-	const element = document.createElement(tagName);
+	const dom = document.createElement(tagName);
 
 	attrs.forEach(([name, value]): void => {
-		const dyn = value.match(matchModifierName);
-		if (dyn) {
-			// TODO: function for debounce queue
-			// modifiers[name] = (newValue) => () => element.setAttribute(name, newValue);
-			modifiers[name] = (newValue): void => element.setAttribute(name, newValue);
+		const modifierName = value.match(matchModifierName);
+
+		if (modifierName) {
+			const modifierAction = (newValue): (() => void) => (): void => dom.setAttribute(name, newValue);
+			addModifier(modifiers, modifierName[0], modifierAction);
 		} else {
-			element.setAttribute(name, value);
+			dom.setAttribute(name, value);
 		}
 	});
 
-	childs.forEach((child): void => element.appendChild(child));
+	childs.forEach((child): Node => dom.appendChild(child.dom));
 
 	return {
-		dom: element,
+		dom,
 		modifiers,
 	};
 };
