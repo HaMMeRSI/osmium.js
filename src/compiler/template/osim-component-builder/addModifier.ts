@@ -4,10 +4,10 @@ export const addModifier = (modifiers: IModifiers, modifierName: string, modifie
 	const [component, modifier]: string[] = modifierName.split('.');
 
 	if (modifiers[component]) {
-		modifiers[component][modifier] = modifierAction;
+		modifiers[component][modifier] = [modifierAction];
 	} else {
 		modifiers[component] = {
-			[modifier]: modifierAction,
+			[modifier]: [modifierAction],
 		};
 	}
 };

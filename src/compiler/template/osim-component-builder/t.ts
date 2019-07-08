@@ -3,12 +3,12 @@ import { matchModifier, matchModifierName } from '../../../consts/regexes';
 import { addModifier } from './addModifier';
 
 export default (text: string): IOsimNode => {
-	const dom: Text = document.createTextNode(text);
+	// const dom: Text = document.createTextNode(text);
 	const textModifiers = text.match(matchModifier);
 	const modifiers = {};
 
 	if (textModifiers) {
-		dom.nodeValue = '';
+		// dom.nodeValue = '';
 		const splitedText = text.split(matchModifier);
 		const brokenText: string[] = textModifiers.flatMap((modifierName, i): string[] => [splitedText[i], modifierName]);
 
@@ -20,7 +20,7 @@ export default (text: string): IOsimNode => {
 					brokenText[i] = value;
 
 					return (): void => {
-						dom.data = brokenText.join('');
+						// dom.data = brokenText.join('');
 					};
 				};
 
@@ -29,5 +29,5 @@ export default (text: string): IOsimNode => {
 		}
 	}
 
-	return { dom, modifiers };
+	return { dom: null, modifiers };
 };

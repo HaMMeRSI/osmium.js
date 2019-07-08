@@ -1,9 +1,10 @@
 import { IOsimNode } from '../../compiler-interfaces';
+import * as deepmerge from 'deepmerge';
 
 type componentBuilder = () => DocumentFragment;
-export default (component: componentBuilder, props, children): IOsimNode => {
+export default (component: componentBuilder, props, childs): IOsimNode => {
 	const staticProps = [];
-	const fragment = document.createDocumentFragment();
+	let modifiers = {};
 
 	props.forEach(([name, value]): void => {
 		const dyn = value.match(/(?<=\$\{).*?(?=})/);
@@ -12,8 +13,12 @@ export default (component: componentBuilder, props, children): IOsimNode => {
 		}
 	});
 
+	childs.forEach((child): void => {
+		modifiers = deepmerge(modifiers, child.modifiers);
+	});
+
 	return {
-		dom: fragment,
-		modifiers: {},
+		dom: null,
+		modifiers,
 	};
 };

@@ -1,21 +1,21 @@
 import processTemplate from './template/process-template';
 import { importFile, importedElements } from '../consts/regexes';
 import * as path from 'path';
-import { IOsimDocument, IOsimTemplateObject, SubDocuments, IOsimRootDocument } from './compiler-interfaces';
+import { IOsimDocument, IOsimTemplateObject, OsimDocuments } from './compiler-interfaces';
 
-function extractPart(part, osim): string {
+function extractPart(part, osimFileText): string {
 	part = part.toLowerCase();
-	const loweredOsim = osim.toLowerCase();
+	const loweredOsim = osimFileText.toLowerCase();
 	const partIndex = loweredOsim.indexOf(`<${part}>`);
 	if (partIndex === -1) return '';
 
 	const start = partIndex + `<${part}>`.length;
 	const end = loweredOsim.indexOf(`</${part}>`);
 
-	return osim.substring(start, end);
+	return osimFileText.substring(start, end);
 }
 
-function parseToDocument(osimFileText, baseDir, subDocuments): IOsimDocument {
+function parseToDocument(osimFileText, baseDir, osimDocuments: OsimDocuments): IOsimDocument {
 	const { imports, components, html }: IOsimTemplateObject = processTemplate(extractPart('template', osimFileText));
 
 	if (imports.length > 0) {
@@ -23,10 +23,10 @@ function parseToDocument(osimFileText, baseDir, subDocuments): IOsimDocument {
 			const filePath: string = imported.match(importFile)[0];
 			const compName: string = imported.match(importedElements)[0];
 
-			if (!(compName in subDocuments)) {
+			if (!(compName in osimDocuments)) {
 				const pathR = path.resolve(baseDir, filePath);
 				const file = require(pathR);
-				subDocuments[compName] = parseToDocument(file, path.dirname(pathR), subDocuments);
+				osimDocuments[compName] = parseToDocument(file, path.dirname(pathR), osimDocuments);
 			}
 		}
 	}
@@ -39,13 +39,10 @@ function parseToDocument(osimFileText, baseDir, subDocuments): IOsimDocument {
 	};
 }
 
-function parseRootDocument(osimFileText, baseDir): IOsimRootDocument {
-	const rootDucument: IOsimRootDocument = {
-		subDocuments: {},
-		mainDocument: null,
-	};
+function parseRootDocument(osimFileText, baseDir): OsimDocuments {
+	const rootDucument: OsimDocuments = {};
 
-	rootDucument.mainDocument = parseToDocument(osimFileText, baseDir, rootDucument.subDocuments);
+	rootDucument.mainDocument = parseToDocument(osimFileText, baseDir, rootDucument);
 	return rootDucument;
 }
 

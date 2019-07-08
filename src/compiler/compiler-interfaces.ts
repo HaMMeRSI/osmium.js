@@ -1,15 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export type SubDocuments = { [name: string]: IOsimDocument };
+export type OsimDocuments = { [name: string]: IOsimDocument };
 
 export interface IOsimTemplateObject {
 	imports: string[];
 	components: string[];
 	html: string;
-}
-
-export interface IOsimRootDocument {
-	mainDocument: IOsimDocument;
-	subDocuments: SubDocuments;
 }
 
 export interface IOsimDocument {
@@ -23,7 +18,7 @@ export type ModifierAction = (newValue) => () => void;
 
 export interface IModifiers {
 	[component: string]: {
-		[modifier: string]: ModifierAction;
+		[modifier: string]: ModifierAction[];
 	};
 }
 
