@@ -6,13 +6,15 @@ module.exports = `
 		day: {{day}}
 		
 		<osim3 name="{{banana}}" day="89"></osim3>
-		<input value="{{name}}"/>
+		<input value="{{name}}" @keydown="{{osim2UpdateFunction}}"/>
 	</div>
 </template>
 
 <script>
 	export default (modifiers, props) => {
-
+		modifiers['osim2UpdateFunction']((e) => {
+			modifiers['banana'](e.target.value)();
+		})();
 	}
 </script>`;
 

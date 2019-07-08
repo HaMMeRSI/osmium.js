@@ -2,13 +2,14 @@ export type ModifierAction = (newValue) => () => void;
 
 export interface IModifiers {
 	[component: string]: {
-		[modifier: string]: ModifierAction[];
+		[modifier: string]: ModifierAction;
 	};
 }
 
 export interface IOsimNode {
 	order: string[];
 	modifiers: IModifiers;
+	props: any;
 	dom: Node;
 }
 

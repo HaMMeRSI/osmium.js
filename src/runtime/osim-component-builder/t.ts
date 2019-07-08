@@ -3,12 +3,12 @@ import { addModifier } from './addModifier';
 import { IOsimNode } from '../runtime-interfaces';
 
 export default (text: string): IOsimNode => {
-	// const dom: Text = document.createTextNode(text);
+	const dom: Text = document.createTextNode(text);
 	const textModifiers = text.match(matchModifier);
 	const modifiers = {};
 
 	if (textModifiers) {
-		// dom.nodeValue = '';
+		dom.nodeValue = '';
 		const splitedText = text.split(matchModifier);
 		const brokenText: string[] = textModifiers.flatMap((modifierName, i): string[] => [splitedText[i], modifierName]);
 
@@ -20,14 +20,15 @@ export default (text: string): IOsimNode => {
 					brokenText[i] = value;
 
 					return (): void => {
-						// dom.data = brokenText.join('');
+						dom.data = brokenText.join('');
 					};
 				};
 
+				dom.data = brokenText.join('');
 				addModifier(modifiers, modifierName[0], modifierAction);
 			}
 		}
 	}
 
-	return { dom: null, modifiers, order: [] };
+	return { dom, modifiers, props: [], order: [] };
 };

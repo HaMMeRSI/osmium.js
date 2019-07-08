@@ -2,15 +2,15 @@ import * as deepmerge from 'deepmerge';
 import { IOsimNode } from '../runtime-interfaces';
 
 export default (childs = []): IOsimNode => {
-	// const fragment = document.createDocumentFragment();
+	const dom = document.createDocumentFragment();
 	let modifiers = {};
 	const order = [];
 
-	childs.forEach((child): void => {
-		// fragment.appendChild(child);
+	childs.forEach((child: IOsimNode): void => {
+		dom.appendChild(child.dom);
 		order.splice(1, 0, ...child.order);
 		modifiers = deepmerge(modifiers, child.modifiers);
 	});
 
-	return { dom: null, modifiers, order };
+	return { dom, modifiers, props: [], order };
 };
