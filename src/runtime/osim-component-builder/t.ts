@@ -1,6 +1,6 @@
-import { IOsimNode } from '../../compiler-interfaces';
-import { matchModifier, matchModifierName } from '../../../consts/regexes';
+import { matchModifier, matchModifierName } from '../../consts/regexes';
 import { addModifier } from './addModifier';
+import { IOsimNode } from '../runtime-interfaces';
 
 export default (text: string): IOsimNode => {
 	// const dom: Text = document.createTextNode(text);
@@ -29,5 +29,5 @@ export default (text: string): IOsimNode => {
 		}
 	}
 
-	return { dom: null, modifiers };
+	return { dom: null, modifiers, order: [] };
 };

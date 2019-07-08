@@ -1,9 +1,7 @@
-import { Hast, OsimDocuments } from './src/compiler/compiler-interfaces';
-import buildComponent from './src/compiler/template/build-component';
 import * as path from 'path';
+import { OsimDocuments } from './src/compiler/compiler-interfaces';
 import { parseRootDocument } from './src/compiler/osim-file-parser';
-import { collapseOsimDocument } from './src/compiler/template/collapse-template';
-import * as parse5 from 'parse5';
+import { emitJsFiles } from './src/compiler/js/emit-js';
 
 const rootOsimComponent = `
 <template>
@@ -20,9 +18,8 @@ const rootOsimComponent = `
 		modifiers['name']('sagi')
 	}
 </script>`;
+const rootComponentSrcPath = path.resolve(process.cwd(), './src/ToCHEANGEtHIS');
+const osimOutputPath = path.resolve(process.cwd(), './osimOutput');
 
-const rootOsimDocument: OsimDocuments = parseRootDocument(rootOsimComponent, path.resolve(process.cwd(), './src'));
-const collapsedHast: Hast = collapseOsimDocument(rootOsimDocument);
-const newt: string = parse5.serialize(collapsedHast);
-console.log(collapsedHast, '\n', newt);
-const componentString = buildComponent(collapsedHast);
+const osimComponents: OsimDocuments = parseRootDocument(rootOsimComponent, rootComponentSrcPath);
+emitJsFiles(osimComponents, osimOutputPath);

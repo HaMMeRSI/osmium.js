@@ -8,23 +8,11 @@ export interface IOsimTemplateObject {
 }
 
 export interface IOsimDocument {
+	path: string;
 	html: string;
 	components: string[];
 	script: string;
 	style: string;
-}
-
-export type ModifierAction = (newValue) => () => void;
-
-export interface IModifiers {
-	[component: string]: {
-		[modifier: string]: ModifierAction[];
-	};
-}
-
-export interface IOsimNode {
-	modifiers: IModifiers;
-	dom: Node;
 }
 
 export interface IHastAttribute {

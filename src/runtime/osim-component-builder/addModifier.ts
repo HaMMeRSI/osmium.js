@@ -1,4 +1,4 @@
-import { IModifiers, ModifierAction } from '../../compiler-interfaces';
+import { IModifiers, ModifierAction } from '../runtime-interfaces';
 
 export const addModifier = (modifiers: IModifiers, modifierName: string, modifierAction: ModifierAction): void => {
 	const [component, modifier]: string[] = modifierName.split('.');

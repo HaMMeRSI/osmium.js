@@ -1,7 +1,7 @@
 import { addModifier } from './addModifier';
-import { matchModifierName } from '../../../consts/regexes';
-import { IOsimNode, IModifiers, IHastAttribute } from '../../compiler-interfaces';
+import { matchModifierName } from '../../consts/regexes';
 import * as deepmerge from 'deepmerge';
+import { IOsimNode, IModifiers, IHastAttribute } from '../runtime-interfaces';
 
 export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: IOsimNode[] = []): IOsimNode => {
 	let modifiers: IModifiers = {};
@@ -26,5 +26,6 @@ export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: I
 	return {
 		dom: null,
 		modifiers,
+		order: [],
 	};
 };

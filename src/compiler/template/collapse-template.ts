@@ -105,11 +105,11 @@ function collaspseHast(
 	return { hast, documentOsimUids };
 }
 
-function collapseOsimDocument(osimDocumentTree: OsimDocuments): Hast {
+function collapseOsimDocument(osimComponents: OsimDocuments): Hast {
 	return collaspseHast(
-		osimDocumentTree.mainDocument,
-		osimDocumentTree,
-		parse5.parseFragment(osimDocumentTree.mainDocument.html),
+		osimComponents.root,
+		osimComponents,
+		parse5.parseFragment(osimComponents.root.html),
 		{
 			dynamicProps: {},
 			staticProps: {},
