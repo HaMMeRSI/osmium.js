@@ -4,7 +4,8 @@ module.exports = `
 	<div class='osm2' id='osim22' value="{{day}}">
 		name: {{name}}
 		day: {{day}}
-		
+		subDomain: {{sub-domain}}
+
 		<osim3 name="{{banana}}" day="89"></osim3>
 		<input value="{{name}}" @keydown="{{osim2UpdateFunction}}"/>
 	</div>

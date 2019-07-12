@@ -8,7 +8,7 @@ const rootOsimComponent = `
 	import osim2 from './components/osim2-component.js';
 	import osim3 from './components/osim3-component.js';
 
-	<osim2 name="{{name}}" day="3"></osim2>
+	<osim2 name="{{name}}" sub-domain="{{minarc}}" day="3"></osim2>
 	<osim3 name="{{name}}" day="3"></osim3>
 	<osim3 name="{{someOtherName}}" day="5"></osim3>
 </template>

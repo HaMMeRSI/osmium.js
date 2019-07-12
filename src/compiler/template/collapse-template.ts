@@ -2,7 +2,7 @@ import { OsimDocuments } from '../compiler-interfaces';
 import { IOsimDocument, IHastAttribute, Hast, ISortedParentProps, IHastObjectAttributes } from '../compiler-interfaces';
 import * as parse5 from 'parse5';
 import * as uniqid from 'uniqid';
-import { matchModifierName, matchModifier, getSpecificMatchModifier } from '../../consts/regexes';
+import { matchModifierName, matchModifier, getSpecificMatchModifier } from '../../runtime/consts/regexes';
 
 function resolveModifiers(hastNode: Hast, parentProps: ISortedParentProps, componentScope: string): void {
 	if (hastNode.attrs) {
@@ -52,11 +52,12 @@ function sortAttributes(attrs: IHastAttribute[], componentScope: string): ISorte
 
 	for (const { name, value } of attrs) {
 		const dynamicName = value.match(matchModifierName);
+
 		if (dynamicName) {
-			const splittedModifier = dynamicName[0].split('.');
+			const [modifierComponentScope, modifier] = dynamicName[0].split('.');
 			dynamicProps[name] = {
-				componentScope: splittedModifier[0],
-				value: splittedModifier[1],
+				componentScope: modifierComponentScope,
+				value: modifier,
 			};
 		} else {
 			staticProps[name] = {
@@ -80,8 +81,10 @@ function collaspseHast(
 	componentScope
 ): { hast: Hast; documentOsimUids: string[] } {
 	let documentOsimUids: string[] = [];
+
 	for (const child of hast.childNodes) {
 		resolveModifiers(child, parentProps, componentScope);
+
 		if (currentOsimDocument.components.includes(child.nodeName)) {
 			const newScope = `${child.nodeName}_${uniqid.time()}`;
 			documentOsimUids.push(newScope);

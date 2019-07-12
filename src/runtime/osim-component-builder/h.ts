@@ -1,15 +1,16 @@
 import { ModifierAction } from './../runtime-interfaces';
 import { addModifier } from './addModifier';
-import { matchModifierName } from '../../consts/regexes';
+import { matchModifierName } from '../consts/regexes';
 import * as deepmerge from 'deepmerge';
-import { IOsimNode, IModifiers, IHastAttribute } from '../runtime-interfaces';
+import { IOsimNode, IOsimModifiers, IHastAttribute } from '../runtime-interfaces';
 
 export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: IOsimNode[] = []): IOsimNode => {
-	let modifiers: IModifiers = {};
-	const dom = document.createElement(tagName);
+	let modifiers: IOsimModifiers = {};
+	const dom = { setAttribute: (name, newAttrValue) => {}, addEventListener: (eventName, newAttrValue) => {}, appendChild: (a) => {} } as any; // document.createElement(tagName);
+	const order = [];
 
 	attrs.forEach(([name, value]: { [Symbol.iterator](); name: string; value: string }): void => {
-		const modifierName = value.match(matchModifierName);
+		const modifierName: RegExpMatchArray = value.match(matchModifierName);
 
 		if (modifierName) {
 			let modifierAction: ModifierAction = (newAttrValue): (() => void) => (): void => {
@@ -30,15 +31,18 @@ export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: I
 		}
 	});
 
+	const requestedProps = {};
 	childs.forEach((child): void => {
 		dom.appendChild(child.dom);
+		order.splice(1, 0, ...child.order);
 		modifiers = deepmerge(modifiers, child.modifiers);
+		Object.assign(requestedProps, child.requestedProps);
 	});
 
 	return {
 		dom,
 		modifiers,
-		props: [],
-		order: [],
+		requestedProps,
+		order,
 	};
 };

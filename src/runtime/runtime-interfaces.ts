@@ -1,15 +1,28 @@
 export type ModifierAction = (newValue) => () => void;
-
-export interface IModifiers {
-	[component: string]: {
-		[modifier: string]: ModifierAction;
+export interface IComponentModifier {
+	[modifier: string]: {
+		listeners: (() => () => void)[];
+		modifierAction: ModifierAction;
 	};
+}
+
+export interface IOsimModifiers {
+	[component: string]: IComponentModifier;
+}
+
+export interface IRegisterToProps {
+	[componentUid: string]: IComponentProps[];
+}
+
+export interface IComponentProps {
+	attr: string;
+	modifier: string;
 }
 
 export interface IOsimNode {
 	order: string[];
-	modifiers: IModifiers;
-	props: any;
+	modifiers: IOsimModifiers;
+	requestedProps: IRegisterToProps;
 	dom: Node;
 }
 

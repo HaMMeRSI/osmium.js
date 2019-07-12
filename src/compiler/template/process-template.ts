@@ -1,4 +1,4 @@
-import { importStatement, importedElements } from '../../consts/regexes';
+import { importStatement, importedElements } from '../../runtime/consts/regexes';
 import { IOsimTemplateObject } from '../compiler-interfaces';
 
 export default (template): IOsimTemplateObject => {

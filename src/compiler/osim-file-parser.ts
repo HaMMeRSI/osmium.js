@@ -1,5 +1,5 @@
 import processTemplate from './template/process-template';
-import { importFile, importedElements } from '../consts/regexes';
+import { importFile, importedElements } from '../runtime/consts/regexes';
 import * as path from 'path';
 import { OsimDocuments, IOsimDocument, IOsimTemplateObject } from './compiler-interfaces';
 

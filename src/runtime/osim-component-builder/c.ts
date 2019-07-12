@@ -1,16 +1,31 @@
 import * as deepmerge from 'deepmerge';
 import { IOsimNode } from '../runtime-interfaces';
+import { matchModifierName } from '../consts/regexes';
 
 export default (componentName: string, props, childs): IOsimNode => {
-	const dom = document.createDocumentFragment();
+	const dom = { appendChild(fwe) {} } as any; // document.createDocumentFragment();
 	const staticProps = [];
-	const order = [props.find(([name]): boolean => name.startsWith('osim'))[1]];
+	const [, uid] = props.find(([name]): boolean => name.startsWith('osim'));
+	const order = [uid];
 	let modifiers = {};
+	const requestedProps = {};
 
 	props.forEach(([name, value]): void => {
-		const dyn = value.match(/(?<=\$\{).*?(?=})/);
-		if (!dyn) {
+		const modifierName = value.match(matchModifierName);
+
+		if (!modifierName) {
 			staticProps.push([name, value]);
+		} else {
+			const requestedProp = {
+				attr: name,
+				modifier: modifierName[0],
+			};
+
+			if (uid in requestedProps) {
+				requestedProps[uid].push(requestedProp);
+			} else {
+				requestedProps[uid] = [requestedProp];
+			}
 		}
 	});
 
@@ -18,12 +33,13 @@ export default (componentName: string, props, childs): IOsimNode => {
 		dom.appendChild(child.dom);
 		order.splice(1, 0, ...child.order);
 		modifiers = deepmerge(modifiers, child.modifiers);
+		Object.assign(requestedProps, child.requestedProps);
 	});
 
 	return {
 		dom,
 		modifiers,
-		props: [],
+		requestedProps,
 		order,
 	};
 };

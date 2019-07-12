@@ -26,5 +26,5 @@ function componentBuilder(node: Hast): string {
 }
 
 export default (hast: Hast): string => {
-	return componentBuilder(hast);
+	return `o(${componentBuilder(hast)})`;
 };
