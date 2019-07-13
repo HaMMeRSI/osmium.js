@@ -32,7 +32,7 @@ const funcs = {
 };
 
 const osim = ${componentString}(funcs);
-document.getElementById('target').appendChild(osim.dom);\n`;
+document.getElementById('target').appendChild(osim);\n`;
 
 	fs.writeFileSync(`${output}/osim-entry.js`, entryFile);
 }

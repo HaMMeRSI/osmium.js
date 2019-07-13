@@ -1,5 +1,5 @@
 import { matchModifier, matchModifierName } from '../consts/regexes';
-import { addModifier } from './addModifier';
+import { createModifier } from './addModifier';
 import { IOsimNode } from '../runtime-interfaces';
 
 export default (text: string): IOsimNode => {
@@ -17,19 +17,20 @@ export default (text: string): IOsimNode => {
 			const modifierName = brokenText[i].match(matchModifierName);
 
 			if (modifierName) {
-				const modifierAction = (value: string): (() => void) => {
-					brokenText[i] = value;
-
-					return (): void => {
+				const modifierAction = (value: string): string => {
+					if (value) {
+						brokenText[i] = value;
 						dom.data = brokenText.join('');
-					};
+					}
+
+					return brokenText[i];
 				};
 
 				dom.data = brokenText.join('');
-				addModifier(modifiers, modifierName[0], modifierAction);
+				createModifier(modifiers, modifierName[0], modifierAction);
 			}
 		}
 	}
 
-	return { dom, modifiers, requestedProps: {}, order: [] };
+	return { dom, modifiersActions: modifiers, requestedProps: {}, order: [] };
 };

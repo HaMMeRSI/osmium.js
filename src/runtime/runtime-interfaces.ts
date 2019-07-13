@@ -1,28 +1,39 @@
-export type ModifierAction = (newValue) => () => void;
-export interface IComponentModifier {
-	[modifier: string]: {
-		listeners: (() => () => void)[];
-		modifierAction: ModifierAction;
-	};
+import { ModifierAction } from './runtime-interfaces';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface IModifier extends ModifierAction {
+	addListner: (func, getProps: () => {}) => () => void;
 }
 
-export interface IOsimModifiers {
-	[component: string]: IComponentModifier;
+export interface IOsmiumComponentModifiers {
+	[modifier: string]: IModifier;
 }
 
-export interface IRegisterToProps {
+export interface IOsmiumModifiers {
+	[component: string]: IOsmiumComponentModifiers;
+}
+export type ModifierAction = (newValue?) => void;
+
+export interface IModifierActions {
+	[component: string]: ModifierAction[];
+}
+
+export type Props = (props: { [modifierName: string]: string }) => void;
+export type RegisterToProps = (f: Props) => void;
+
+export interface IRequestedProps {
 	[componentUid: string]: IComponentProps[];
 }
 
 export interface IComponentProps {
+	[Symbol.iterator]();
 	attr: string;
 	modifier: string;
 }
 
 export interface IOsimNode {
 	order: string[];
-	modifiers: IOsimModifiers;
-	requestedProps: IRegisterToProps;
+	modifiersActions: IModifierActions;
+	requestedProps: IRequestedProps;
 	dom: Node;
 }
 

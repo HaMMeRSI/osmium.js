@@ -1,19 +1,38 @@
-import { IOsimNode, IComponentModifier, IRegisterToProps } from '../runtime-interfaces';
+import { IOsimNode, RegisterToProps, IOsmiumComponentModifiers } from '../runtime-interfaces';
+import { enhaceModifier } from './addModifier';
 
 type Funcs = {
-	[name: string]: (modifiers: IComponentModifier, registerToProp: IRegisterToProps) => void;
+	[name: string]: (modifiers: IOsmiumComponentModifiers, registerToProps: RegisterToProps) => void;
 };
 
-export default (osmiumApp: IOsimNode): ((componentFuncs: Funcs) => void) => (componentFuncs): void => {
+export default (osmiumApp: IOsimNode): ((componentFuncs: Funcs) => Node) => (componentFuncs): Node => {
+	osmiumApp.order.splice(0, 0, 'root');
+	const modifiers = enhaceModifier(osmiumApp.modifiersActions);
+
 	for (const compInOrder of osmiumApp.order) {
 		const requestedProps = osmiumApp.requestedProps[compInOrder];
-		const registerToProps: IRegisterToProps = requestedProps.reduce((acc, { attr, modifier }): IRegisterToProps => {
-			const [compUid, modifierName] = modifier;
-			acc[attr] = (func): number => osmiumApp.modifiers[compUid][modifierName].listeners.push(func);
-			return acc;
-		}, {});
+		const rgisterPropsChange: RegisterToProps = (f): void => {
+			const getProps = () => {
+				const props = {};
+				for (const { attr, modifier } of Object.values(requestedProps)) {
+					const [modiferComponentUid, modifierName] = modifier.split('.');
+					props[attr] = modifiers[modiferComponentUid][modifierName]();
+				}
+
+				return props;
+			};
+
+			for (const { modifier } of Object.values(requestedProps)) {
+				const [modiferComponentUid, modifierName] = modifier.split('.');
+				modifiers[modiferComponentUid][modifierName].addListner(f, getProps);
+			}
+
+			f(getProps());
+		};
 
 		const componentFunction = componentFuncs[compInOrder.split('_')[0]];
-		componentFunction(osmiumApp.modifiers[compInOrder], registerToProps);
+		componentFunction(modifiers[compInOrder], rgisterPropsChange);
 	}
+
+	return osmiumApp.dom;
 };

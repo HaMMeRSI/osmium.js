@@ -10,12 +10,14 @@ const rootOsimComponent = `
 
 	<osim2 name="{{name}}" sub-domain="{{minarc}}" day="3"></osim2>
 	<osim3 name="{{name}}" day="3"></osim3>
-	<osim3 name="{{someOtherName}}" day="5"></osim3>
+	<osim3 name="{{otherName}}" day="5"></osim3>
 </template>
 
 <script>
-	export default (modifires, props) => {
-		modifiers['name']('sagi')
+	export default (modifiers, props) => {
+		modifiers['name']('sagi');
+		modifiers['minarc']('sagiFWE');
+		modifiers['otherName']('Nastus');
 	}
 </script>`;
 const rootComponentSrcPath = path.resolve(process.cwd(), './src/ToCHEANGEtHIS');

@@ -3,7 +3,8 @@ import { IOsimNode } from '../runtime-interfaces';
 import { matchModifierName } from '../consts/regexes';
 
 export default (componentName: string, props, childs): IOsimNode => {
-	const dom = { appendChild(fwe) {} } as any; // document.createDocumentFragment();
+	const dom = { appendChild(fwe) {} } as any;
+	// const dom = document.createDocumentFragment();
 	const staticProps = [];
 	const [, uid] = props.find(([name]): boolean => name.startsWith('osim'));
 	const order = [uid];
@@ -32,13 +33,13 @@ export default (componentName: string, props, childs): IOsimNode => {
 	childs.forEach((child: IOsimNode): void => {
 		dom.appendChild(child.dom);
 		order.splice(1, 0, ...child.order);
-		modifiers = deepmerge(modifiers, child.modifiers);
+		modifiers = deepmerge(modifiers, child.modifiersActions);
 		Object.assign(requestedProps, child.requestedProps);
 	});
 
 	return {
 		dom,
-		modifiers,
+		modifiersActions: modifiers,
 		requestedProps,
 		order,
 	};

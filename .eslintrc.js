@@ -18,6 +18,7 @@ module.exports = {
 		'@typescript-eslint/no-var-requires': 0,
 		'@typescript-eslint/interface-name-prefix': [1, 'always'],
 		'@typescript-eslint/prefer-interface': 0,
+		'@typescript-eslint/explicit-function-return-type': 0,
 		'linebreak-style': 0,
 		indent: ['error', 'tab'],
 		'no-tabs': 0,
