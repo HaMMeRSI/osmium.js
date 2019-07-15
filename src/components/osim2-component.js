@@ -2,9 +2,9 @@ module.exports = `
 <template>
 	import osim3 from './osim3-component.js';
 	<div class='osm2' id='osim22' value="{{day}}">
-		name: {{name}}
-		day: {{day}}
-		subDomain: {{sub-domain}}
+		name: {{name}}<br/>
+		day: {{day}}<br/>
+		subDomain: {{sub-domain}}<br/>
 		proper: {{proper}}
 		<osim3 name="{{banana}}" day="89"></osim3>
 		<input value="{{name}}" @change="{{osim2UpdateFunction}}"/>

@@ -1,24 +1,18 @@
 import * as deepmerge from 'deepmerge';
 import { IOsimNode } from '../runtime-interfaces';
+import { runtimeDeepmergeOptions } from '../helpers/deepmerge-options';
 
 export default (childs = []): IOsimNode => {
-	const dom = { appendChild: (fe) => {} } as any;
-	// const dom = document.createDocumentFragment();
-	let modifiers = {};
-	const order = [];
-
-	const requestedProps = {};
-	childs.forEach((child: IOsimNode): void => {
-		dom.appendChild(child.dom);
-		order.splice(1, 0, ...child.order);
-		modifiers = deepmerge(modifiers, child.modifiersActions);
-		Object.assign(requestedProps, child.requestedProps);
-	});
-
-	return {
+	// const dom = { appendChild: (fe) => {} } as any;
+	const dom = document.createDocumentFragment();
+	let builderFragment: IOsimNode = {
 		dom,
-		modifiersActions: modifiers,
-		requestedProps,
-		order,
+		builtins: [],
+		modifiersActions: {},
+		order: [],
+		requestedProps: {},
 	};
+
+	childs.forEach((child) => (builderFragment = deepmerge(builderFragment, child, runtimeDeepmergeOptions)));
+	return builderFragment;
 };

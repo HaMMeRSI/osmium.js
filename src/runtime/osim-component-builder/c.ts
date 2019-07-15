@@ -1,22 +1,24 @@
 import * as deepmerge from 'deepmerge';
 import { IOsimNode } from '../runtime-interfaces';
 import { matchModifierName } from '../consts/regexes';
+import { runtimeDeepmergeOptions } from '../helpers/deepmerge-options';
 
 export default (componentName: string, props, childs): IOsimNode => {
-	const dom = { appendChild(fwe) {} } as any;
-	// const dom = document.createDocumentFragment();
-	const staticProps = [];
+	// const dom = { appendChild(fwe) {} } as any;
+	const dom = document.createDocumentFragment();
 	const [, uid] = props.find(([name]): boolean => name.startsWith('osim'));
-	const order = [uid];
-	let modifiers = {};
-	const requestedProps = {};
+	let builderComponent: IOsimNode = {
+		dom,
+		builtins: [],
+		modifiersActions: {},
+		order: [uid],
+		requestedProps: {},
+	};
 
-	props.forEach(([name, value]): void => {
+	props.reduce((requestedProps, [name, value]) => {
 		const modifierName = value.match(matchModifierName);
 
-		if (!modifierName) {
-			staticProps.push([name, value]);
-		} else {
+		if (modifierName) {
 			const requestedProp = {
 				attr: name,
 				modifier: modifierName[0],
@@ -28,19 +30,8 @@ export default (componentName: string, props, childs): IOsimNode => {
 				requestedProps[uid] = [requestedProp];
 			}
 		}
-	});
+	}, builderComponent.requestedProps);
 
-	childs.forEach((child: IOsimNode): void => {
-		dom.appendChild(child.dom);
-		order.splice(1, 0, ...child.order);
-		modifiers = deepmerge(modifiers, child.modifiersActions);
-		Object.assign(requestedProps, child.requestedProps);
-	});
-
-	return {
-		dom,
-		modifiersActions: modifiers,
-		requestedProps,
-		order,
-	};
+	childs.forEach((child) => (builderComponent = deepmerge(builderComponent, child, runtimeDeepmergeOptions)));
+	return builderComponent;
 };

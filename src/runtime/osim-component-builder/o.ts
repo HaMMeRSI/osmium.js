@@ -1,5 +1,5 @@
 import { IOsimNode, RegisterToProps, IOsmiumComponentModifiers } from '../runtime-interfaces';
-import { enhaceModifier } from './addModifier';
+import { enhaceModifier } from '../helpers/addModifier';
 
 type Funcs = {
 	[name: string]: (modifiers: IOsmiumComponentModifiers, registerToProps: RegisterToProps) => void;

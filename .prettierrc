@@ -2,7 +2,7 @@
 	"tabWidth": 4,
 	"useTabs": true,
 	"singleQuote": true,
-	"printWidth": 150,
+	"printWidth": 170,
 	"trailingComma": "es5",
 	"eslintIntegration": true,
 	"tslintIntegration": true,

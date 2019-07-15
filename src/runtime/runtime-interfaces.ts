@@ -20,21 +20,26 @@ export interface IModifierActions {
 export type Props = (props: { [modifierName: string]: string }) => void;
 export type RegisterToProps = (f: Props) => void;
 
-export interface IRequestedProps {
-	[componentUid: string]: IComponentProps[];
-}
-
 export interface IComponentProps {
 	[Symbol.iterator]();
 	attr: string;
 	modifier: string;
 }
+export interface IRequestedProps {
+	[componentUid: string]: IComponentProps[];
+}
+
+export interface IBuiltins {
+	usedModifiers: string[];
+	evaluationFunction: (modifiers: IOsmiumComponentModifiers) => IOsimNode;
+}
 
 export interface IOsimNode {
-	order: string[];
+	dom: Node;
 	modifiersActions: IModifierActions;
 	requestedProps: IRequestedProps;
-	dom: Node;
+	builtins: IBuiltins[];
+	order: string[];
 }
 
 export interface IHastAttribute {

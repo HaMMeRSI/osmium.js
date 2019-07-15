@@ -1,10 +1,10 @@
 import { matchModifier, matchModifierName } from '../consts/regexes';
-import { createModifier } from './addModifier';
 import { IOsimNode } from '../runtime-interfaces';
+import { createModifier } from '../helpers/addModifier';
 
 export default (text: string): IOsimNode => {
-	const dom: Text = {} as any;
-	// const dom: Text = document.createTextNode(text);
+	// const dom: Text = {} as any;
+	const dom: Text = document.createTextNode(text);
 	const textModifiers = text.match(matchModifier);
 	const modifiers = {};
 
@@ -17,13 +17,9 @@ export default (text: string): IOsimNode => {
 			const modifierName = brokenText[i].match(matchModifierName);
 
 			if (modifierName) {
-				const modifierAction = (value: string): string => {
-					if (value) {
-						brokenText[i] = value;
-						dom.data = brokenText.join('');
-					}
-
-					return brokenText[i];
+				const modifierAction = (value: string): void => {
+					brokenText[i] = value;
+					dom.data = brokenText.join('');
 				};
 
 				dom.data = brokenText.join('');
@@ -32,5 +28,5 @@ export default (text: string): IOsimNode => {
 		}
 	}
 
-	return { dom, modifiersActions: modifiers, requestedProps: {}, order: [] };
+	return { dom, modifiersActions: modifiers, requestedProps: {}, order: [], builtins: [] };
 };

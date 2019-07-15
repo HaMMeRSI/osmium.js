@@ -1,19 +1,19 @@
 import { ModifierAction } from './../runtime-interfaces';
-import { createModifier } from './addModifier';
+import { createModifier } from '../helpers/addModifier';
 import { matchModifierName } from '../consts/regexes';
 import * as deepmerge from 'deepmerge';
 import { IOsimNode, IModifierActions, IHastAttribute } from '../runtime-interfaces';
+import { runtimeDeepmergeOptions } from '../helpers/deepmerge-options';
 
 export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: IOsimNode[] = []): IOsimNode => {
-	let modifiers: IModifierActions = {};
-	const dom = {
-		setAttribute: (name, newAttrValue) => {},
-		addEventListener: (eventName, newAttrValue) => {},
-		appendChild: (a) => {},
-		getAttribute: (a) => {},
-	} as any;
-	// const dom = document.createElement(tagName);
-	const order = [];
+	const modifiersActions: IModifierActions = {};
+	// const dom = {
+	// 	setAttribute: (name, newAttrValue) => {},
+	// 	addEventListener: (eventName, newAttrValue) => {},
+	// 	appendChild: (a) => {},
+	// 	getAttribute: (a) => {},
+	// } as any;
+	const dom = document.createElement(tagName);
 
 	attrs.forEach(([name, value]: { [Symbol.iterator](); name: string; value: string }): void => {
 		const modifierName: RegExpMatchArray = value.match(matchModifierName);
@@ -31,24 +31,20 @@ export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: I
 				};
 			}
 
-			createModifier(modifiers, modifierName[0], modifierAction);
+			createModifier(modifiersActions, modifierName[0], modifierAction);
 		} else {
 			dom.setAttribute(name, value);
 		}
 	});
 
-	const requestedProps = {};
-	childs.forEach((child): void => {
-		dom.appendChild(child.dom);
-		order.splice(1, 0, ...child.order);
-		modifiers = deepmerge(modifiers, child.modifiersActions);
-		Object.assign(requestedProps, child.requestedProps);
-	});
-
-	return {
+	let builderh: IOsimNode = {
 		dom,
-		modifiersActions: modifiers,
-		requestedProps,
-		order,
+		builtins: [],
+		modifiersActions,
+		order: [],
+		requestedProps: {},
 	};
+
+	childs.forEach((child) => (builderh = deepmerge(builderh, child, runtimeDeepmergeOptions)));
+	return builderh;
 };

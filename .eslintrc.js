@@ -20,7 +20,6 @@ module.exports = {
 		'@typescript-eslint/prefer-interface': 0,
 		'@typescript-eslint/explicit-function-return-type': 0,
 		'linebreak-style': 0,
-		indent: ['error', 'tab'],
 		'no-tabs': 0,
 		'require-jsdoc': 0,
 		'max-len': 0,

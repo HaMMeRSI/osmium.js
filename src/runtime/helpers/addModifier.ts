@@ -5,7 +5,7 @@ function getModifier(actions: ModifierAction[]): IModifier {
 	const listeners = [];
 
 	const execute = (modifierValue: string) => {
-		if (modifierValue) {
+		if (modifierValue !== undefined) {
 			value = modifierValue;
 			actions.forEach((action): void => action(modifierValue));
 			listeners.forEach((listner): void => listner());

@@ -7,15 +7,16 @@ import { matchModifierName, matchModifier, getSpecificMatchModifier } from '../.
 function resolveModifiers(hastNode: Hast, parentProps: ISortedParentProps, componentScope: string): void {
 	if (hastNode.attrs) {
 		(hastNode.attrs as IHastAttribute[]).forEach((attr): void => {
-			const modifierName = attr.value.match(matchModifierName);
-
-			if (modifierName) {
-				if (modifierName[0] in parentProps.staticProps) {
-					attr.value = parentProps.staticProps[modifierName[0]].value;
-				} else if (modifierName[0] in parentProps.dynamicProps) {
-					attr.value = `{{${parentProps.dynamicProps[modifierName[0]].componentScope}.${modifierName[0]}}}`;
-				} else {
-					attr.value = `{{${componentScope}.${modifierName[0]}}}`;
+			const modifierNames = attr.value.match(matchModifierName);
+			if (modifierNames) {
+				for (const modifierName of modifierNames) {
+					if (modifierName in parentProps.staticProps) {
+						attr.value = parentProps.staticProps[modifierName].value;
+					} else if (modifierName in parentProps.dynamicProps) {
+						attr.value = attr.value.replace(modifierName, `${parentProps.dynamicProps[modifierName].componentScope}.${modifierName}`);
+					} else {
+						attr.value = attr.value.replace(modifierName, `${componentScope}.${modifierName}`);
+					}
 				}
 			}
 		});
@@ -31,10 +32,7 @@ function resolveModifiers(hastNode: Hast, parentProps: ISortedParentProps, compo
 				} else if (modifierName in parentProps.dynamicProps) {
 					const modifier = parentProps.dynamicProps[modifierName];
 
-					hastNode.value = hastNode.value.replace(
-						getSpecificMatchModifier(modifierName),
-						`{{${modifier.componentScope}.${modifier.value}}}`
-					);
+					hastNode.value = hastNode.value.replace(getSpecificMatchModifier(modifierName), `{{${modifier.componentScope}.${modifier.value}}}`);
 				} else {
 					hastNode.value = hastNode.value.replace(getSpecificMatchModifier(modifierName), `{{${componentScope}.${modifierName}}}`);
 				}
