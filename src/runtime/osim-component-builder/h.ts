@@ -1,11 +1,11 @@
-import { ModifierAction } from './../runtime-interfaces';
+import { ModifierAction, IOsimBuildChilds } from './../runtime-interfaces';
 import { createModifier } from '../helpers/addModifier';
 import { matchModifierName } from '../consts/regexes';
 import * as deepmerge from 'deepmerge';
 import { IOsimNode, IModifierActions, IHastAttribute } from '../runtime-interfaces';
 import { runtimeDeepmergeOptions } from '../helpers/deepmerge-options';
 
-export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: IOsimNode[] = []): IOsimNode => {
+export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: IOsimBuildChilds = []): IOsimNode => {
 	const modifiersActions: IModifierActions = {};
 	// const dom = {
 	// 	setAttribute: (name, newAttrValue) => {},
@@ -37,7 +37,7 @@ export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: I
 		}
 	});
 
-	let builderh: IOsimNode = {
+	let onodeh: IOsimNode = {
 		dom,
 		builtins: [],
 		modifiersActions,
@@ -45,6 +45,13 @@ export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: I
 		requestedProps: {},
 	};
 
-	childs.forEach((child) => (builderh = deepmerge(builderh, child, runtimeDeepmergeOptions)));
-	return builderh;
+	childs.forEach((child) => {
+		let resolvedChild = child;
+		if (typeof child === 'function') {
+			resolvedChild = child(dom);
+		}
+
+		onodeh = deepmerge(onodeh, resolvedChild as IOsimNode, runtimeDeepmergeOptions);
+	});
+	return onodeh;
 };

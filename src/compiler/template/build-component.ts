@@ -28,7 +28,9 @@ function componentBuilder(node: Hast): string {
 			const newIf = modifiers.reduce((acc, curr) => {
 				return acc.replace(curr, `modifiers.${curr.match(matchModifierName)[0].split('.')[1]}()`);
 			}, attrs[0].value);
-			return `b('${node.nodeName}-${attrs[0].name}',[${modifiers.map((x) => `'${x}'`).join(',')}],(modifiers)=>(${newIf})?f([${childrens.join(',')}]):f())`;
+			return `b('${node.nodeName}-${attrs[0].name}',[${modifiers.map((x) => `'${x.replace(/[{}]/g, '')}'`).join(',')}],(modifiers)=>(${newIf})?f([${childrens.join(
+				','
+			)}]):null)`;
 		}
 		return `b('${node.nodeName}',[${modifiers.join(',')}],()=>f([${childrens.join(',')}]))`;
 	}

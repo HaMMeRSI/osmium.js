@@ -34,6 +34,8 @@ export interface IBuiltins {
 	evaluationFunction: (modifiers: IOsmiumComponentModifiers) => IOsimNode;
 }
 
+export type IOsimBuildChilds = (IOsimNode | ((dom: HTMLElement) => IOsimNode))[];
+
 export interface IOsimNode {
 	dom: Node;
 	modifiersActions: IModifierActions;

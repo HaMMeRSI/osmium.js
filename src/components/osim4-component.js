@@ -11,8 +11,8 @@ module.exports = `
 </template>
 
 <script>
-(modifiers, props) => {
-	export default modifiers.toggleText((e) => {
+export default (modifiers, props) => {
+	modifiers.toggleText((e) => {
 		modifiers.isToggleOn(!modifiers.isToggleOn());
 	})
 }

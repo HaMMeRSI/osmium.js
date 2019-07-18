@@ -24,10 +24,8 @@ function getModifier(actions: ModifierAction[]): IModifier {
 	return execute;
 }
 
-export const enhaceModifier = (modifiers: IModifierActions): IOsmiumModifiers => {
-	const enhacedModifiers: IOsmiumModifiers = {};
-
-	for (const [fullModifierName, actions] of Object.entries(modifiers)) {
+export const enhaceModifier = (modifierActions: IModifierActions, enhacedModifiers: IOsmiumModifiers): IOsmiumModifiers => {
+	for (const [fullModifierName, actions] of Object.entries(modifierActions)) {
 		const [componentUid, modifierName]: string[] = fullModifierName.split('.');
 
 		if (enhacedModifiers[componentUid]) {
