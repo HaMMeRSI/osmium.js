@@ -1,4 +1,4 @@
-import { OsimDocuments, Hast } from '../compiler-interfaces';
+import { OsimDocuments, ICollapseResult } from '../compiler-interfaces';
 import * as fs from 'fs';
 import * as path from 'path';
 import { collapseOsimDocument } from '../template/collapse-template';
@@ -11,7 +11,7 @@ import buildComponent from '../template/build-component';
 // const aaa = eval(componentString);
 // console.log(aaa);
 function buildOsimEntry(osimComponents: OsimDocuments, output: string): void {
-	const collapsedHast: Hast = collapseOsimDocument(osimComponents);
+	const collapsedHast: ICollapseResult = collapseOsimDocument(osimComponents);
 	const componentString = buildComponent(collapsedHast.hast);
 
 	const importStrings = [];
@@ -33,7 +33,7 @@ const funcs = {
 };
 
 const target = document.getElementById('target');
-const osim = ${componentString}(target, funcs);
+const osim = ${componentString}(target, funcs, ${JSON.stringify(collapsedHast.allModifiers)});
 document.getElementById('target').appendChild(osim);\n`;
 
 	fs.writeFileSync(`${output}/osim-entry.js`, entryFile);

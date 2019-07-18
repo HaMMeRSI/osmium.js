@@ -1,10 +1,11 @@
-import { OsimDocuments } from '../compiler-interfaces';
-import { IOsimDocument, IHastAttribute, Hast, ISortedParentProps, IHastObjectAttributes } from '../compiler-interfaces';
+import { OsimDocuments, ICollapseResult, Hast } from '../compiler-interfaces';
+import { IOsimDocument, IHastAttribute, ISortedParentProps, IHastObjectAttributes } from '../compiler-interfaces';
 import * as parse5 from 'parse5';
 import * as uniqid from 'uniqid';
 import { matchModifierName, matchModifier, getSpecificMatchModifier } from '../../runtime/consts/regexes';
 
-function resolveModifiers(hastNode: Hast, parentProps: ISortedParentProps, componentScope: string): void {
+function resolveModifiers(hastNode: Hast, parentProps: ISortedParentProps, componentScope: string): string[] {
+	const componentModifiers: string[] = [];
 	if (hastNode.attrs) {
 		(hastNode.attrs as IHastAttribute[]).forEach((attr): void => {
 			const modifierNames = attr.value.match(matchModifierName);
@@ -15,7 +16,9 @@ function resolveModifiers(hastNode: Hast, parentProps: ISortedParentProps, compo
 					} else if (modifierName in parentProps.dynamicProps) {
 						attr.value = attr.value.replace(modifierName, `${parentProps.dynamicProps[modifierName].componentScope}.${modifierName}`);
 					} else {
-						attr.value = attr.value.replace(modifierName, `${componentScope}.${modifierName}`);
+						const modifier = `${componentScope}.${modifierName}`;
+						attr.value = attr.value.replace(modifierName, modifier);
+						componentModifiers.push(modifier);
 					}
 				}
 			}
@@ -34,11 +37,15 @@ function resolveModifiers(hastNode: Hast, parentProps: ISortedParentProps, compo
 
 					hastNode.value = hastNode.value.replace(getSpecificMatchModifier(modifierName), `{{${modifier.componentScope}.${modifier.value}}}`);
 				} else {
-					hastNode.value = hastNode.value.replace(getSpecificMatchModifier(modifierName), `{{${componentScope}.${modifierName}}}`);
+					const modifier = `${componentScope}.${modifierName}`;
+					hastNode.value = hastNode.value.replace(getSpecificMatchModifier(modifierName), `{{${modifier}}}`);
+					componentModifiers.push(modifier);
 				}
 			}
 		}
 	}
+
+	return componentModifiers;
 }
 
 function sortAttributes(attrs: IHastAttribute[], componentScope: string): ISortedParentProps {
@@ -68,21 +75,16 @@ function sortAttributes(attrs: IHastAttribute[], componentScope: string): ISorte
 	};
 }
 
-function collaspseHast(
-	currentOsimDocument: IOsimDocument,
-	subDocuments: OsimDocuments,
-	hast: Hast,
-	parentProps: ISortedParentProps,
-	componentScope
-): { hast: Hast; documentOsimUids: string[] } {
-	let documentOsimUids: string[] = [];
+function collaspseHast(currentOsimDocument: IOsimDocument, subDocuments: OsimDocuments, hast: Hast, parentProps: ISortedParentProps, componentScope): ICollapseResult {
+	const allModifiers: Set<string> = new Set();
 
 	for (const child of hast.childNodes) {
-		resolveModifiers(child, parentProps, componentScope);
+		resolveModifiers(child, parentProps, componentScope).forEach((modifier) => {
+			allModifiers.add(modifier);
+		});
 
 		if (currentOsimDocument.components.includes(child.nodeName)) {
 			const newScope = `${child.nodeName}_${uniqid.time()}`;
-			documentOsimUids.push(newScope);
 			const collapsed = collaspseHast(
 				subDocuments[child.nodeName],
 				subDocuments,
@@ -91,19 +93,23 @@ function collaspseHast(
 				newScope
 			);
 
-			documentOsimUids = documentOsimUids.concat(collapsed.documentOsimUids);
+			collapsed.allModifiers.forEach((modifier) => {
+				allModifiers.add(modifier);
+			});
 			child.attrs.push({ name: 'osim:uid', value: newScope });
 			child.childNodes = collapsed.hast.childNodes;
 		} else if (child.childNodes && child.childNodes.length > 0) {
 			const collapsed = collaspseHast(currentOsimDocument, subDocuments, child, parentProps, componentScope);
-			documentOsimUids = documentOsimUids.concat(collapsed.documentOsimUids);
+			collapsed.allModifiers.forEach((modifier) => {
+				allModifiers.add(modifier);
+			});
 		}
 	}
 
-	return { hast, documentOsimUids };
+	return { hast, allModifiers: Array.from(allModifiers) };
 }
 
-function collapseOsimDocument(osimComponents: OsimDocuments): Hast {
+function collapseOsimDocument(osimComponents: OsimDocuments): ICollapseResult {
 	return collaspseHast(
 		osimComponents.root,
 		osimComponents,

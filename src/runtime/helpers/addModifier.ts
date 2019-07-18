@@ -2,7 +2,7 @@ import { IModifierActions, ModifierAction, IModifier, IOsmiumModifiers } from '.
 
 function getModifier(actions: ModifierAction[]): IModifier {
 	let value = '';
-	const listeners = [];
+	let listeners = [];
 
 	const execute = (modifierValue: string) => {
 		if (modifierValue !== undefined) {
@@ -17,7 +17,22 @@ function getModifier(actions: ModifierAction[]): IModifier {
 	execute.addListner = (func, getProps: () => {}) => {
 		listeners.push(() => func(getProps()));
 		return (): void => {
-			listeners.filter((listner) => listner !== func);
+			listeners = listeners.filter((listner) => listner !== func);
+		};
+	};
+
+	execute.addActions = (newActions: ModifierAction[]) => {
+		const unregistrers = newActions.map((action) => {
+			actions.push(action);
+			action(value);
+
+			return (): void => {
+				actions = actions.filter((listner) => listner !== action);
+			};
+		});
+
+		return (): void => {
+			unregistrers.forEach((unregistrer) => unregistrer());
 		};
 	};
 
@@ -33,6 +48,21 @@ export const enhaceModifier = (modifierActions: IModifierActions, enhacedModifie
 		} else {
 			enhacedModifiers[componentUid] = {
 				[modifierName]: getModifier(actions),
+			};
+		}
+	}
+	return enhacedModifiers;
+};
+
+export const createModifiers = (modifiers: string[], enhacedModifiers: IOsmiumModifiers): IOsmiumModifiers => {
+	for (const fullModifierName of modifiers) {
+		const [componentUid, modifierName]: string[] = fullModifierName.split('.');
+
+		if (enhacedModifiers[componentUid]) {
+			enhacedModifiers[componentUid][modifierName] = getModifier([]);
+		} else {
+			enhacedModifiers[componentUid] = {
+				[modifierName]: getModifier([]),
 			};
 		}
 	}

@@ -1,4 +1,4 @@
-import { Hast, IHastObjectAttributes, IHastAttribute } from './../compiler-interfaces';
+import { Hast, IHastAttribute } from './../compiler-interfaces';
 import { matchModifierName, matchModifier } from '../../runtime/consts/regexes';
 
 function parseAttrs(attrs = []): string {
@@ -26,7 +26,8 @@ function componentBuilder(node: Hast): string {
 		const modifiers = attrs[0].value.match(matchModifier);
 		if (attrs[0].name === 'if') {
 			const newIf = modifiers.reduce((acc, curr) => {
-				return acc.replace(curr, `modifiers.${curr.match(matchModifierName)[0].split('.')[1]}()`);
+				const splitted = curr.match(matchModifierName)[0].split('.');
+				return acc.replace(curr, `modifiers.${splitted[0]}.${splitted[1]}()`);
 			}, attrs[0].value);
 			return `b('${node.nodeName}-${attrs[0].name}',[${modifiers.map((x) => `'${x.replace(/[{}]/g, '')}'`).join(',')}],(modifiers)=>(${newIf})?f([${childrens.join(
 				','

@@ -36,3 +36,8 @@ export interface ISortedParentProps {
 }
 
 export type Hast = any;
+
+export interface ICollapseResult {
+	hast: Hast;
+	allModifiers: string[];
+}

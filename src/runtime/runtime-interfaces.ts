@@ -1,6 +1,6 @@
-import { ModifierAction } from './runtime-interfaces';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface IModifier extends ModifierAction {
+	addActions: (action) => () => void;
 	addListner: (func, getProps: () => {}) => () => void;
 }
 
@@ -31,7 +31,7 @@ export interface IRequestedProps {
 
 export interface IBuiltins {
 	usedModifiers: string[];
-	evaluationFunction: (modifiers: IOsmiumComponentModifiers) => IOsimNode;
+	evaluationFunction: (modifiers: IOsmiumModifiers) => IOsimNode;
 }
 
 export type IOsimBuildChilds = (IOsimNode | ((dom: HTMLElement) => IOsimNode))[];

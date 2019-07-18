@@ -13,6 +13,9 @@ const rootOsimComponent = `
 <script>
 	export default (modifiers, props) => {
 		modifiers['name']('sagi');
+		setTimeout(() => {
+			modifiers['name']('sagi234');
+		}, 2500)
 		// modifiers['minarc']('sagiFWE');
 		// modifiers['otherName']('Nastus');
 	}
