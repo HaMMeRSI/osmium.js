@@ -1,5 +1,5 @@
 import { IOsimNode, RegisterToProps, IOsmiumComponentModifiers, IOsmiumModifiers } from '../runtime-interfaces';
-import { enhaceModifier, createModifiers } from '../helpers/addModifier';
+import { enhaceModifier, initModifiers } from '../helpers/addModifier';
 
 type Funcs = {
 	[name: string]: (modifiers: IOsmiumComponentModifiers, registerToProps: RegisterToProps) => void;
@@ -13,22 +13,22 @@ export default (buildOsmiumApp: (dom) => IOsimNode): ((target: HTMLElement, comp
 	const osmiumApp = buildOsmiumApp(target);
 	osmiumApp.order.splice(0, 0, 'root');
 	const modifiers: IOsmiumModifiers = {};
-	createModifiers(allModifiers, modifiers);
+	initModifiers(allModifiers, modifiers);
 	enhaceModifier(osmiumApp.modifiersActions, modifiers);
 
-	for (const builtin of osmiumApp.builtins) {
-		for (const requestedModifier of builtin.usedModifiers) {
-			const [uid, action] = requestedModifier.split('.');
-			modifiers[uid][action].addListner(
-				() => {
-					return builtin.evaluationFunction(modifiers);
-				},
-				() => {
-					return null;
-				}
-			);
-		}
-	}
+	// for (const builtin of osmiumApp.builtins) {
+	// 	for (const requestedModifier of builtin.usedModifiers) {
+	// 		const [uid, action] = requestedModifier.split('.');
+	// 		modifiers[uid][action].addListner(
+	// 			() => {
+	// 				return builtin.evaluationFunction(modifiers);
+	// 			},
+	// 			() => {
+	// 				return null;
+	// 			}
+	// 		);
+	// 	}
+	// }
 
 	for (const compInOrder of osmiumApp.order) {
 		const requestedProps = osmiumApp.requestedProps[compInOrder];

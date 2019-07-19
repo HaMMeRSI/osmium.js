@@ -2,9 +2,12 @@ module.exports = `
 <template>
 	toggle: {{isToggleOn}}
 	<div>
+		What is on: <br/>
 		<osim if="{{isToggleOn}} === true">
+			<br/>
 			Hello if statement! :)<br/>
 			adding {{batata}} here
+			<br/>
 		</osim>
 		<button @click="{{toggleText}}">Toggle button</button>
 	</div>

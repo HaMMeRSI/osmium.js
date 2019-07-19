@@ -54,7 +54,7 @@ export const enhaceModifier = (modifierActions: IModifierActions, enhacedModifie
 	return enhacedModifiers;
 };
 
-export const createModifiers = (modifiers: string[], enhacedModifiers: IOsmiumModifiers): IOsmiumModifiers => {
+export const initModifiers = (modifiers: string[], enhacedModifiers: IOsmiumModifiers): IOsmiumModifiers => {
 	for (const fullModifierName of modifiers) {
 		const [componentUid, modifierName]: string[] = fullModifierName.split('.');
 
