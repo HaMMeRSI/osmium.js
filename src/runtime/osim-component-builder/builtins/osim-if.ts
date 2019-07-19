@@ -2,12 +2,12 @@ import * as deepmerge from 'deepmerge';
 import { IOsmiumModifiers, IOsimNode } from '../../runtime-interfaces';
 import { runtimeDeepmergeOptions } from '../../helpers/deepmerge-options';
 
-export const getConditionBuiltin = (evalChild, nodePlaceHolder, dom) => {
+export const getConditionBuiltin = (evalChild, nodePlaceHolder, usedModifiers) => {
 	let childNodes: ChildNode[] = [];
 	let unregisterFromModfiers = null;
 
 	return {
-		usedModifiers: [],
+		usedModifiers,
 		evaluationFunction: (passedModifiers: IOsmiumModifiers): IOsimNode => {
 			let onodeBuiltin: IOsimNode = {
 				dom: document.createDocumentFragment(),
@@ -17,7 +17,7 @@ export const getConditionBuiltin = (evalChild, nodePlaceHolder, dom) => {
 				requestedProps: {},
 			};
 
-			let evaluatedBuiltin = evalChild(passedModifiers);
+			const evaluatedBuiltin = evalChild(passedModifiers);
 			if (evaluatedBuiltin === null) {
 				if (childNodes.length > 0) {
 					childNodes[0].replaceWith(nodePlaceHolder);
@@ -30,11 +30,7 @@ export const getConditionBuiltin = (evalChild, nodePlaceHolder, dom) => {
 					childNodes = [];
 					unregisterFromModfiers = null;
 				}
-			} else if (typeof evaluatedBuiltin === 'function') {
-				evaluatedBuiltin = (evaluatedBuiltin as any)(dom);
-			}
-
-			if (evaluatedBuiltin) {
+			} else {
 				onodeBuiltin = deepmerge(onodeBuiltin, evaluatedBuiltin, runtimeDeepmergeOptions);
 
 				const unregistrers = Object.entries(onodeBuiltin.modifiersActions).map(([fullModifierName, actions]) => {

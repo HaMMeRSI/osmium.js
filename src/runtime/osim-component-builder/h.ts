@@ -1,11 +1,11 @@
-import { ModifierAction, IOsimBuildChilds } from './../runtime-interfaces';
+import { ModifierAction, IOsimChilds } from './../runtime-interfaces';
 import { createModifier } from '../helpers/addModifier';
 import { matchModifierName } from '../consts/regexes';
 import * as deepmerge from 'deepmerge';
 import { IOsimNode, IModifierActions, IHastAttribute } from '../runtime-interfaces';
 import { runtimeDeepmergeOptions } from '../helpers/deepmerge-options';
 
-export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: IOsimBuildChilds = []): IOsimNode => {
+export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: IOsimChilds = []): IOsimNode => {
 	const modifiersActions: IModifierActions = {};
 	// const dom = {
 	// 	setAttribute: (name, newAttrValue) => {},
@@ -46,12 +46,7 @@ export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: I
 	};
 
 	childs.forEach((child) => {
-		let resolvedChild = child;
-		if (typeof child === 'function') {
-			resolvedChild = child(dom);
-		}
-
-		onodeh = deepmerge(onodeh, resolvedChild as IOsimNode, runtimeDeepmergeOptions);
+		onodeh = deepmerge(onodeh, child as IOsimNode, runtimeDeepmergeOptions);
 	});
 	return onodeh;
 };
