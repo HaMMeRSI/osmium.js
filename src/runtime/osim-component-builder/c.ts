@@ -28,6 +28,8 @@ export default (componentName: string, props, childs): IOsimNode => {
 				requestedProps[uid] = [requestedProp];
 			}
 		}
+
+		return requestedProps;
 	}, onodeComponent.requestedProps);
 
 	childs.forEach((child) => {

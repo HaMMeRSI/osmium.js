@@ -44,7 +44,11 @@ export const enhaceModifier = (modifierActions: IModifierActions, enhacedModifie
 		const [componentUid, modifierName]: string[] = fullModifierName.split('.');
 
 		if (enhacedModifiers[componentUid]) {
-			enhacedModifiers[componentUid][modifierName] = getModifier(actions);
+			if (enhacedModifiers[componentUid][modifierName]) {
+				enhacedModifiers[componentUid][modifierName].addActions(actions);
+			} else {
+				enhacedModifiers[componentUid][modifierName] = getModifier(actions);
+			}
 		} else {
 			enhacedModifiers[componentUid] = {
 				[modifierName]: getModifier(actions),

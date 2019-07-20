@@ -1,33 +1,13 @@
 import { IOsimNode, RegisterToProps, IOsmiumComponentModifiers, IOsmiumModifiers } from '../runtime-interfaces';
-import { enhaceModifier, initModifiers } from '../helpers/addModifier';
+import { enhaceModifier, initModifiers } from '../helpers/modifier-methods';
 
 type Funcs = {
 	[name: string]: (modifiers: IOsmiumComponentModifiers, registerToProps: RegisterToProps) => void;
 };
 
-export default (osmiumApp: IOsimNode): ((target: HTMLElement, componentFuncs: Funcs, allModifiers: string[]) => Node) => (target, componentFuncs, allModifiers): Node => {
-	target.appendChild(osmiumApp.dom);
-	osmiumApp.order.splice(0, 0, 'root');
-	const modifiers: IOsmiumModifiers = {};
-	initModifiers(allModifiers, modifiers);
-	enhaceModifier(osmiumApp.modifiersActions, modifiers);
-
-	for (const builtin of osmiumApp.builtins) {
-		for (const requestedModifier of builtin.usedModifiers) {
-			const [uid, action] = requestedModifier.split('.');
-			modifiers[uid][action].addListner(
-				() => {
-					return builtin.evaluationFunction(modifiers);
-				},
-				() => {
-					return null;
-				}
-			);
-		}
-	}
-
-	for (const compInOrder of osmiumApp.order) {
-		const requestedProps = osmiumApp.requestedProps[compInOrder];
+function computeOsimNode(osmiumNode: IOsimNode, componentFuncs: Funcs, modifiers: IOsmiumModifiers) {
+	for (const compInOrder of osmiumNode.order) {
+		const requestedProps = osmiumNode.requestedProps[compInOrder];
 		const rgisterPropsChange: RegisterToProps = (f): void => {
 			const getProps = () => {
 				const props = {};
@@ -50,6 +30,29 @@ export default (osmiumApp: IOsimNode): ((target: HTMLElement, componentFuncs: Fu
 		const componentFunction = componentFuncs[compInOrder.split('_')[0]];
 		componentFunction(modifiers[compInOrder], rgisterPropsChange);
 	}
+
+	for (const builtin of osmiumNode.builtins) {
+		const evaluationFunction = () => {
+			const osimBuiltinNode = builtin.evaluationFunction(modifiers);
+			computeOsimNode(osimBuiltinNode, componentFuncs, modifiers);
+		};
+		evaluationFunction();
+
+		for (const requestedModifier of builtin.usedModifiers) {
+			const [uid, action] = requestedModifier.split('.');
+			modifiers[uid][action].addListner(evaluationFunction, () => null);
+		}
+	}
+}
+
+export default (osmiumApp: IOsimNode): ((target: HTMLElement, componentFuncs: Funcs, allModifiers: string[]) => Node) => (target, componentFuncs, allModifiers): Node => {
+	target.appendChild(osmiumApp.dom);
+	osmiumApp.order.splice(0, 0, 'root');
+	const modifiers: IOsmiumModifiers = {};
+	initModifiers(allModifiers, modifiers);
+
+	enhaceModifier(osmiumApp.modifiersActions, modifiers);
+	computeOsimNode(osmiumApp, componentFuncs, modifiers);
 
 	return osmiumApp.dom;
 };

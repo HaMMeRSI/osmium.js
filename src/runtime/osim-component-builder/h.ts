@@ -1,5 +1,5 @@
 import { ModifierAction, IOsimChilds } from './../runtime-interfaces';
-import { createModifier } from '../helpers/addModifier';
+import { createModifier } from '../helpers/modifier-methods';
 import { matchModifierName } from '../consts/regexes';
 import * as deepmerge from 'deepmerge';
 import { IOsimNode, IModifierActions, IHastAttribute } from '../runtime-interfaces';
@@ -25,9 +25,12 @@ export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: I
 
 			if (name.startsWith('@')) {
 				modifierAction = (newAttrValue: (e) => void): void => {
-					const eventName = name.split('@')[1];
-					// dom.removeEventListener(eventName, oldAttrValue);
-					dom.addEventListener(eventName, newAttrValue);
+					// This test is because auto activate action in enhaceModifier
+					if (newAttrValue) {
+						const eventName = name.split('@')[1];
+						// dom.removeEventListener(eventName, oldAttrValue);
+						dom.addEventListener(eventName, newAttrValue);
+					}
 				};
 			}
 

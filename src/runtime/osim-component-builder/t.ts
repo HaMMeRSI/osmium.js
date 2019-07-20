@@ -1,6 +1,6 @@
 import { matchModifier, matchModifierName } from '../consts/regexes';
 import { IOsimNode } from '../runtime-interfaces';
-import { createModifier } from '../helpers/addModifier';
+import { createModifier } from '../helpers/modifier-methods';
 
 export default (text: string): IOsimNode => {
 	// const dom: Text = {} as any;
