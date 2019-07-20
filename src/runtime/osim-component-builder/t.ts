@@ -1,6 +1,7 @@
 import { matchDynamicGetter, matchDynamicGetterName } from '../consts/regexes';
 import { IOsimNode } from '../runtime-interfaces';
 import { createModifier } from '../helpers/modifier-methods';
+import { resolveObjectKey, getAccessorFromString } from '../helpers/objectFunctions';
 
 export default (text: string): IOsimNode => {
 	// const dom: Text = {} as any;
@@ -18,12 +19,16 @@ export default (text: string): IOsimNode => {
 
 			if (modifierName) {
 				const modifierAction = (value: string): void => {
-					brokenText[i] = value;
+					if (typeof value === 'object') {
+						brokenText[i] = resolveObjectKey(getAccessorFromString(modifierName[0]), value);
+					} else {
+						brokenText[i] = value;
+					}
 					dom.data = brokenText.join('');
 				};
 
 				dom.data = brokenText.join('');
-				createModifier(modifiers, modifierName[0], modifierAction);
+				createModifier(modifiers, modifierName[0].split('.')[0], modifierAction);
 			}
 		}
 	}

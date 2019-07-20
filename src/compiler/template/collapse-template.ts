@@ -46,7 +46,7 @@ function resolveModifiers(hastNode: Hast, parentProps: ISortedParentProps, compo
 						`{{${componentScope}${deli}${dynamicGetterName.replace(modifierName, value)}}}`
 					);
 				} else {
-					const newModifier = `${componentScope}${deli}${dynamicGetterName}`;
+					const newModifier = `${componentScope}${deli}${modifierName}`;
 					hastNode.value = hastNode.value.replace(getSpecificMatchDynamicGetter(dynamicGetterName), `{{${newModifier}}}`);
 					componentModifiers.push(newModifier);
 				}

@@ -41,8 +41,8 @@ function getModifier(actions: ModifierAction[]): IModifier {
 }
 
 export const enhaceModifier = (modifierActions: IModifierActions, enhacedModifiers: IOsmiumModifiers): IOsmiumModifiers => {
-	for (const [fullModifierName, actions] of Object.entries(modifierActions)) {
-		const [componentUid, modifierName]: string[] = fullModifierName.split(componentScopeDelimiter);
+	for (const [fullDynamicGetter, actions] of Object.entries(modifierActions)) {
+		const [componentUid, modifierName]: string[] = fullDynamicGetter.split(componentScopeDelimiter);
 
 		if (enhacedModifiers[componentUid]) {
 			if (enhacedModifiers[componentUid][modifierName]) {

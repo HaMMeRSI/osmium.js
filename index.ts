@@ -8,7 +8,9 @@ const rootOsimComponent = `
 	import osim2 from './components/osim2-component.js';
 	import osim3 from './components/osim3-component.js';
 	import osim4 from './components/osim4-component.js';
+	import osim5 from './components/osim5-component.js';
 
+	<div><osim5 person="{{persona}}"></osim5></div>
 	<div><osim4 batata="{{name}}" name="{{name}}"></osim4></div>
 	<div><osim2 name="{{name}}" sub-domain="{{minarc}}" day="3"></osim2></div>
 	<div><osim3 name="{{name}}" day="3"></osim3></div>
