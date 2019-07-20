@@ -1,6 +1,6 @@
 import * as deepmerge from 'deepmerge';
 import { IOsimNode } from '../runtime-interfaces';
-import { matchModifierName } from '../consts/regexes';
+import { matchDynamicGetterName } from '../consts/regexes';
 import { runtimeDeepmergeOptions } from '../helpers/deepmerge-options';
 
 export default (componentName: string, props, childs): IOsimNode => {
@@ -9,17 +9,17 @@ export default (componentName: string, props, childs): IOsimNode => {
 		dom: document.createDocumentFragment(),
 		builtins: [],
 		modifiersActions: {},
-		order: [uid],
+		order: [{ componentName, uid }],
 		requestedProps: {},
 	};
 
 	props.reduce((requestedProps, [name, value]) => {
-		const modifierName = value.match(matchModifierName);
+		const dynamicGetter = value.match(matchDynamicGetterName);
 
-		if (modifierName) {
+		if (dynamicGetter) {
 			const requestedProp = {
 				attr: name,
-				modifier: modifierName[0],
+				modifier: dynamicGetter[0].split('.')[0],
 			};
 
 			if (uid in requestedProps) {

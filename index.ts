@@ -17,6 +17,10 @@ const rootOsimComponent = `
 
 <script>
 	export default (modifiers, props) => {
+		modifiers['persona']({
+			name: 'nahum',
+			age: 23,
+		});
 		modifiers['name']('sagi');
 		setTimeout(() => {
 			modifiers['name']('sagi234');

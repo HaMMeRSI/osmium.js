@@ -1,22 +1,16 @@
 import { ModifierAction, IOsimChilds } from './../runtime-interfaces';
 import { createModifier } from '../helpers/modifier-methods';
-import { matchModifierName } from '../consts/regexes';
+import { matchDynamicGetterName } from '../consts/regexes';
 import * as deepmerge from 'deepmerge';
 import { IOsimNode, IModifierActions, IHastAttribute } from '../runtime-interfaces';
 import { runtimeDeepmergeOptions } from '../helpers/deepmerge-options';
 
 export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: IOsimChilds = []): IOsimNode => {
 	const modifiersActions: IModifierActions = {};
-	// const dom = {
-	// 	setAttribute: (name, newAttrValue) => {},
-	// 	addEventListener: (eventName, newAttrValue) => {},
-	// 	appendChild: (a) => {},
-	// 	getAttribute: (a) => {},
-	// } as any;
 	const dom = document.createElement(tagName);
 
 	attrs.forEach(([name, value]: { [Symbol.iterator](); name: string; value: string }): void => {
-		const modifierName: RegExpMatchArray = value.match(matchModifierName);
+		const modifierName: RegExpMatchArray = value.match(matchDynamicGetterName);
 
 		if (modifierName) {
 			let modifierAction: ModifierAction = (newAttrValue: string): void => {

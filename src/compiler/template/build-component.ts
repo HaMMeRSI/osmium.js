@@ -1,5 +1,6 @@
 import { Hast, IHastAttribute } from './../compiler-interfaces';
-import { matchModifierName, matchModifier } from '../../runtime/consts/regexes';
+import { matchDynamicGetterName, matchDynamicGetter } from '../../runtime/consts/regexes';
+import { componentScopeDelimiter } from '../utils/consts';
 
 function parseAttrs(attrs = []): string {
 	return JSON.stringify(attrs.map(({ name, value }): string[] => [name, value]));
@@ -7,14 +8,19 @@ function parseAttrs(attrs = []): string {
 
 function componentBuilder(node: Hast): string {
 	if (node.nodeName === '#text') {
-		return `t(${JSON.stringify(node.value)})`;
+		const text = JSON.stringify(node.value);
+		if (!/^"(?:\\n|\\r|\\t)+"$/g.test(text)) {
+			return `t(${text})`;
+		}
+
+		return null;
 	}
 
 	if (!node.childNodes || node.childNodes.length === 0) {
 		return `h('${node.nodeName}',${parseAttrs(node.attrs)})`;
 	}
 
-	const childrens: string[] = node.childNodes.map((child): string => componentBuilder(child));
+	const childrens: string[] = node.childNodes.map((child): string => componentBuilder(child)).filter((child) => !!child);
 
 	const osimUid = node.attrs && node.attrs.find((attr): boolean => attr.name === 'osim:uid');
 	if (osimUid) {
@@ -23,17 +29,20 @@ function componentBuilder(node: Hast): string {
 		return `f([${childrens.join(',')}])`;
 	} else if (node.nodeName === 'osim') {
 		const attrs = node.attrs as IHastAttribute[];
-		const modifiers = attrs[0].value.match(matchModifier);
+		const dynamicGettersForCondition = attrs[0].value.match(matchDynamicGetter);
+
 		if (attrs[0].name === 'if') {
-			const newIf = modifiers.reduce((acc, curr) => {
-				const splitted = curr.match(matchModifierName)[0].split('.');
-				return acc.replace(curr, `modifiers.${splitted[0]}.${splitted[1]}()`);
+			const newIf = dynamicGettersForCondition.reduce((acc, modifier) => {
+				const splitted = modifier.match(matchDynamicGetterName)[0].split(componentScopeDelimiter);
+				return acc.replace(modifier, `modifiers.${splitted[0]}.${splitted[1]}()`);
 			}, attrs[0].value);
-			return `b('${node.nodeName}-${attrs[0].name}',[${modifiers.map((x) => `'${x.replace(/[{}]/g, '')}'`).join(',')}],(modifiers)=>(${newIf})?f([${childrens.join(
-				','
-			)}]):null)`;
+
+			return `b('${node.nodeName}-${attrs[0].name}',[${dynamicGettersForCondition
+				.map((x) => `'${x.replace(/[{}]/g, '')}'`)
+				.join(',')}],(modifiers)=>(${newIf})?f([${childrens.join(',')}]):null)`;
 		}
-		return `b('${node.nodeName}',[${modifiers.join(',')}],()=>f([${childrens.join(',')}]))`;
+
+		return `b('${node.nodeName}',[${dynamicGettersForCondition.join(',')}],()=>f([${childrens.join(',')}]))`;
 	}
 
 	return `h('${node.nodeName}',${parseAttrs(node.attrs)},[${childrens.join(',')}])`;

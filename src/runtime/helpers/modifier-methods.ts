@@ -1,4 +1,5 @@
 import { IModifierActions, ModifierAction, IModifier, IOsmiumModifiers } from '../runtime-interfaces';
+import { componentScopeDelimiter } from '../consts/delimiter';
 
 function getModifier(actions: ModifierAction[]): IModifier {
 	let value = '';
@@ -41,7 +42,7 @@ function getModifier(actions: ModifierAction[]): IModifier {
 
 export const enhaceModifier = (modifierActions: IModifierActions, enhacedModifiers: IOsmiumModifiers): IOsmiumModifiers => {
 	for (const [fullModifierName, actions] of Object.entries(modifierActions)) {
-		const [componentUid, modifierName]: string[] = fullModifierName.split('.');
+		const [componentUid, modifierName]: string[] = fullModifierName.split(componentScopeDelimiter);
 
 		if (enhacedModifiers[componentUid]) {
 			if (enhacedModifiers[componentUid][modifierName]) {
@@ -60,7 +61,7 @@ export const enhaceModifier = (modifierActions: IModifierActions, enhacedModifie
 
 export const initModifiers = (modifiers: string[], enhacedModifiers: IOsmiumModifiers): IOsmiumModifiers => {
 	for (const fullModifierName of modifiers) {
-		const [componentUid, modifierName]: string[] = fullModifierName.split('.');
+		const [componentUid, modifierName]: string[] = fullModifierName.split(componentScopeDelimiter);
 
 		if (enhacedModifiers[componentUid]) {
 			enhacedModifiers[componentUid][modifierName] = getModifier([]);

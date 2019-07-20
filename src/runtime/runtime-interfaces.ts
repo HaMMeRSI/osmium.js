@@ -14,7 +14,7 @@ export interface IOsmiumModifiers {
 export type ModifierAction = (newValue?) => void;
 
 export interface IModifierActions {
-	[component: string]: ModifierAction[];
+	[fullModifierName: string]: ModifierAction[];
 }
 
 export type Props = (props: { [modifierName: string]: string }) => void;
@@ -36,12 +36,17 @@ export interface IBuiltins {
 
 export type IOsimChilds = IOsimNode[];
 
+export interface IOsimOrder {
+	uid: string;
+	componentName: string;
+}
+
 export interface IOsimNode {
 	dom: Node;
 	modifiersActions: IModifierActions;
 	requestedProps: IRequestedProps;
 	builtins: IBuiltins[];
-	order: string[];
+	order: IOsimOrder[];
 }
 
 export interface IHastAttribute {

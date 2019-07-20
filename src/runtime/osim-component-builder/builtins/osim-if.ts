@@ -1,6 +1,7 @@
 import * as deepmerge from 'deepmerge';
 import { IOsmiumModifiers, IOsimNode, IOsimChilds } from '../../runtime-interfaces';
 import { runtimeDeepmergeOptions } from '../../helpers/deepmerge-options';
+import { componentScopeDelimiter } from '../../consts/delimiter';
 
 export const getConditionBuiltinEvaluationFunction = (childEvaluationFunction: (modifiers) => IOsimChilds, builtinPlaceHolder: Comment) => {
 	let childNodes: ChildNode[] = [];
@@ -32,7 +33,7 @@ export const getConditionBuiltinEvaluationFunction = (childEvaluationFunction: (
 			onodeBuiltin = deepmerge(onodeBuiltin, evaluatedONode, runtimeDeepmergeOptions);
 
 			const unregistrers = Object.entries(onodeBuiltin.modifiersActions).map(([fullModifierName, actions]) => {
-				const [componentUid, modifierName] = fullModifierName.split('.');
+				const [componentUid, modifierName] = fullModifierName.split(componentScopeDelimiter);
 				return passedModifiers[componentUid][modifierName].addActions(actions);
 			});
 			unregisterFromModfiers = (): void => {
