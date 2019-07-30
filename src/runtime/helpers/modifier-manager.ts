@@ -6,18 +6,39 @@ export const createModifiersManager = (): IModifierManager => {
 	const modifierCollection: IOsmiumModifiers = new Map<string, IModifierInstance>();
 	const proxyCollection: Map<ComponentUid, any> = new Map<ComponentUid, any>();
 
+	function createModifierObjectProxy(modifier: IModifierInstance, modifierObject: any) {
+		return new Proxy(modifierObject, {
+			get(target, prop: any) {
+				const objectValue = target[prop];
+				if (typeof objectValue === 'object') {
+					return createModifierObjectProxy(modifier, objectValue);
+				}
+
+				return objectValue;
+			},
+			set(target, prop: any, value) {
+				target[prop] = value;
+				modifier.value = value;
+				modifier.actions.forEach((action) => action(value));
+				modifier.listeners.forEach((listner) => listner());
+				return true;
+			},
+		});
+	}
+
 	function createComponentModifierProxy(componentUid: ComponentUid): any {
 		const obj: { [componentUid: string]: IModifierInstance } = {};
 		return new Proxy(obj, {
-			get(_, prop) {
+			get(_, prop: any) {
 				const modifierFullName = `${componentUid}${componentScopeDelimiter}${String(prop)}`;
 				if (modifierCollection.has(modifierFullName)) {
-					const modifierValue = modifierCollection.get(modifierFullName).value;
+					const modifier = modifierCollection.get(modifierFullName);
 
-					if (typeof modifierValue === 'object') {
+					if (typeof modifier.value === 'object') {
+						return createModifierObjectProxy(modifier, modifier.value);
 					}
 
-					return modifierCollection.get(modifierFullName).value;
+					return modifier.value;
 				}
 
 				throw new Error(`modifier: ${String(prop)} does not exsists`);

@@ -21,9 +21,9 @@ function resolveModifiers(hastNode: IHast, parentProps: IProps, componentScope: 
 						const { componentScope, value } = parentProps.dynamicProps[modifierName];
 						attr.value = attr.value.replace(modifierName, `${componentScope}${componentScopeDelimiter}${value}`);
 					} else {
-						const modifier = `${componentScope}${componentScopeDelimiter}${modifierName}`;
-						attr.value = attr.value.replace(modifierName, modifier);
-						componentModifiers.push(modifier);
+						const newModifier = `${componentScope}${componentScopeDelimiter}${dynamicGetter}`;
+						attr.value = attr.value.replace(dynamicGetter, newModifier);
+						componentModifiers.push(newModifier.split('.')[0]);
 					}
 				}
 			}
@@ -49,12 +49,12 @@ function resolveModifiers(hastNode: IHast, parentProps: IProps, componentScope: 
 						`{{${componentScope}${componentScopeDelimiter}${dynamicGetterName.replace(modifierName, value)}}}`
 					);
 				} else {
-					const newModifier = `${componentScope}${componentScopeDelimiter}${modifierName}`;
+					const newModifier = `${componentScope}${componentScopeDelimiter}${dynamicGetterName}`;
 					hastNode.value = hastNode.value.replace(
 						getSpecificMatchDynamicGetter(dynamicGetterName),
 						`{{${newModifier}}}`
 					);
-					componentModifiers.push(newModifier);
+					componentModifiers.push(newModifier.split('.')[0]);
 				}
 			}
 		}

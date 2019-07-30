@@ -4,7 +4,6 @@ import { addModifierAction } from '../helpers/modifier-methods';
 import { resolveObjectKey, getAccessorFromString } from '../helpers/objectFunctions';
 
 export default (text: string): IOsimNode => {
-	// const dom: Text = {} as any;
 	const dom: Text = document.createTextNode(text);
 	const textModifiers = text.match(matchDynamicGetter);
 	const modifierActions = {};

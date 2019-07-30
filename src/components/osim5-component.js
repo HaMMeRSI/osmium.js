@@ -12,6 +12,9 @@ module.exports = `
 		modifiers.r = {
 			baba: '23f'
 		};
+		setTimeout(()=> {
+			modifiers.r.baba = '43';
+		}, 1000)
 	}
 </script>`;
 

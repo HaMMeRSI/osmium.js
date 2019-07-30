@@ -6,7 +6,7 @@ export default (
 	nodeName: string,
 	usedModifiers: string[] = [],
 	uid: string,
-	childEvaluationFunction: (modifiers) => () => IOsimChilds
+	childEvaluationFunction: (modifiers) => () => IOsimNode
 ): IOsimNode => {
 	const domPlaceHolder = document.createComment('b-ph');
 
