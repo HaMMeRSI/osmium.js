@@ -1,7 +1,7 @@
 import { IOsimNode, RegisterToProps, IOsmiumComponentModifiers } from '../runtime-interfaces';
 import { createModifiersManager } from '../helpers/modifier-manager';
 import { componentScopeDelimiter } from '../../common/consts';
-import { IAllModifiersObjectified } from '../../common/interfaces';
+import { IModifierNamesByScopeObjectified } from '../../common/interfaces';
 
 type Funcs = {
 	[name: string]: (modifiers: IOsmiumComponentModifiers, registerToProps: RegisterToProps) => void;
@@ -9,7 +9,7 @@ type Funcs = {
 
 export default (
 	osmiumApp: IOsimNode
-): ((target: HTMLElement, componentFuncs: Funcs, allModifiers: IAllModifiersObjectified) => Node) => (
+): ((target: HTMLElement, componentFuncs: Funcs, modifierNamesByScope: IModifierNamesByScopeObjectified) => Node) => (
 	target,
 	componentFuncs,
 	modifierNamesByScope

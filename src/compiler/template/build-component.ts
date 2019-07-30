@@ -1,13 +1,13 @@
 import { matchDynamicGetterName, matchDynamicGetter } from '../../runtime/consts/regexes';
 import { IHast, IHastAttribute } from '../compiler-interfaces';
 import { componentScopeDelimiter } from '../../common/consts';
-import { IAllModifiersObjectified } from '../../common/interfaces';
+import { IModifierNamesByScopeObjectified } from '../../common/interfaces';
 
 function parseAttrs(attrs = []): string {
 	return JSON.stringify(attrs.map(({ name, value }): string[] => [name, value]));
 }
 
-function componentBuilder(node: IHast, modifiers: IAllModifiersObjectified): string {
+function componentBuilder(node: IHast, modifiers: IModifierNamesByScopeObjectified): string {
 	if (node.nodeName === '#text') {
 		const text = JSON.stringify(node.value);
 		if (!/^"(?:\\n|\\r|\\t)+"$/g.test(text)) {
@@ -51,6 +51,6 @@ function componentBuilder(node: IHast, modifiers: IAllModifiersObjectified): str
 	return `h('${node.nodeName}',${parseAttrs(node.attrs)},[${childrens.join(',')}])`;
 }
 
-export default (hast: IHast, modifiers: IAllModifiersObjectified): string => {
+export default (hast: IHast, modifiers: IModifierNamesByScopeObjectified): string => {
 	return `o(${componentBuilder(hast, modifiers)})`;
 };

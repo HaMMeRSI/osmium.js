@@ -3,20 +3,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { collapseOsimDocument } from '../template/collapse-template';
 import buildComponent from '../template/build-component';
-import { IAllModifiersObjectified } from '../../common/interfaces';
-// const h = require('../../runtime/osim-component-builder/h').default;
-// const c = require('../../runtime/osim-component-builder/c').default;
-// const t = require('../../runtime/osim-component-builder/t').default;
-// const f = require('../../runtime/osim-component-builder/f').default;
-// const o = require('../../runtime/osim-component-builder/o').default;
-// const aaa = eval(componentString);
-// console.log(aaa);
+import { IModifierNamesByScopeObjectified } from '../../common/interfaces';
+
 function buildOsimEntry(osimComponents: OsimDocuments, output: string): void {
 	const collapsedHast: ICollapseResult = collapseOsimDocument(osimComponents);
-	const modifiers = Object.entries(collapsedHast.allModifiers).reduce((acc, [scope, modifiers]) => {
+	const modifiers = Object.entries(collapsedHast.modifierScopes).reduce((acc, [scope, modifiers]) => {
 		acc[scope] = Array.from(modifiers);
 		return acc;
-	}, {}) as IAllModifiersObjectified;
+	}, {}) as IModifierNamesByScopeObjectified;
 	const componentString = buildComponent(collapsedHast.hast, modifiers);
 
 	const importStrings = [];

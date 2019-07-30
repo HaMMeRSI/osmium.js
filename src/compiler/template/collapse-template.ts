@@ -1,12 +1,12 @@
-import { OsimDocuments, ICollapseResult, IHast, IProps, IAllModifiers } from '../compiler-interfaces';
+import { OsimDocuments, ICollapseResult, IHast, IProps, IModifierScopes } from '../compiler-interfaces';
 import { IOsimDocument, IHastAttribute, IHastObjectAttributes } from '../compiler-interfaces';
 import * as parse5 from 'parse5';
 import * as uniqid from 'uniqid';
 import { matchDynamicGetterName, matchDynamicGetter, getSpecificMatchDynamicGetter } from '../../runtime/consts/regexes';
 import { componentScopeDelimiter } from '../../common/consts';
 
-function resolveModifiers(hastNode: IHast, parentProps: IProps, componentScope: string): string[] {
-	const componentModifiers: string[] = [];
+function resolveModifiers(hastNode: IHast, parentProps: IProps, componentScope: string): Set<string> {
+	const componentModifiers: Set<string> = new Set();
 	if (hastNode.attrs) {
 		(hastNode.attrs as IHastAttribute[]).forEach((attr): void => {
 			const dynamicGetters = attr.value.match(matchDynamicGetterName);
@@ -23,7 +23,7 @@ function resolveModifiers(hastNode: IHast, parentProps: IProps, componentScope: 
 					} else {
 						const newModifier = `${componentScope}${componentScopeDelimiter}${dynamicGetter}`;
 						attr.value = attr.value.replace(dynamicGetter, newModifier);
-						componentModifiers.push(newModifier.split('.')[0]);
+						componentModifiers.add(newModifier.split('.')[0]);
 					}
 				}
 			}
@@ -54,7 +54,7 @@ function resolveModifiers(hastNode: IHast, parentProps: IProps, componentScope: 
 						getSpecificMatchDynamicGetter(dynamicGetterName),
 						`{{${newModifier}}}`
 					);
-					componentModifiers.push(newModifier.split('.')[0]);
+					componentModifiers.add(newModifier.split('.')[0]);
 				}
 			}
 		}
@@ -63,7 +63,7 @@ function resolveModifiers(hastNode: IHast, parentProps: IProps, componentScope: 
 	return componentModifiers;
 }
 
-function sortAttributes(attrs: IHastAttribute[]): IProps {
+function createPropsForChild(attrs: IHastAttribute[]): IProps {
 	const staticProps: IHastObjectAttributes = {};
 	const dynamicProps: IHastObjectAttributes = {};
 
@@ -94,64 +94,62 @@ function collaspseHast(
 	subDocuments: OsimDocuments,
 	hast: IHast,
 	props: IProps,
-	componentScope: string
+	componentUid: string
 ): ICollapseResult {
-	const allModifiers: IAllModifiers = {
-		all: new Set<string>(),
+	const currentScope: IModifierScopes = {
+		global: new Set<string>(),
 	};
 
 	for (const child of hast.childNodes) {
-		resolveModifiers(child, props, componentScope).forEach((modifier) => {
-			allModifiers.all.add(modifier);
-		});
+		resolveModifiers(child, props, componentUid).forEach(currentScope.global.add, currentScope.global);
 
 		if (currentOsimDocument.components.includes(child.nodeName)) {
 			const newScope = `${child.nodeName}${uniqid.time()}`;
-			const collapsed = collaspseHast(
+			const { hast, modifierScopes } = collaspseHast(
 				subDocuments[child.nodeName],
 				subDocuments,
 				parse5.parseFragment(subDocuments[child.nodeName].html),
-				sortAttributes(child.attrs),
+				createPropsForChild(child.attrs),
 				newScope
 			);
 
-			for (const [scope, modifiers] of Object.entries(collapsed.allModifiers)) {
-				if (scope === 'all') {
-					modifiers.forEach((modifier) => allModifiers.all.add(modifier));
+			for (const [scope, modifiers] of Object.entries(modifierScopes)) {
+				if (scope === 'global') {
+					modifiers.forEach((modifier) => currentScope.global.add(modifier));
 				} else {
-					allModifiers[scope] = modifiers;
+					currentScope[scope] = modifiers;
 				}
 			}
 
 			child.attrs.push({ name: 'osim:uid', value: newScope });
-			child.childNodes = collapsed.hast.childNodes;
+			child.childNodes = hast.childNodes;
 		} else if (child.childNodes && child.childNodes.length > 0) {
-			let modifierSet: Set<string> = allModifiers.all;
+			let newScope: Set<string> = currentScope.global;
 			if (child.nodeName === 'osim') {
 				const scope = `${child.nodeName}${uniqid.time()}`;
-				modifierSet = new Set<string>();
-				allModifiers[scope] = modifierSet;
+				newScope = new Set<string>();
+				currentScope[scope] = newScope;
 				child.attrs.push({ name: 'osim:uid', value: scope });
 			}
 
-			const collapsed = collaspseHast(currentOsimDocument, subDocuments, child, props, componentScope);
-			for (const [scope, modifiers] of Object.entries(collapsed.allModifiers)) {
-				if (scope === 'all') {
+			const { modifierScopes } = collaspseHast(currentOsimDocument, subDocuments, child, props, componentUid);
+			for (const [scope, modifiers] of Object.entries(modifierScopes)) {
+				if (scope === 'global') {
 					modifiers.forEach((modifier) => {
-						if (modifier.startsWith(componentScope)) {
-							allModifiers.all.add(modifier);
+						if (modifier.startsWith(componentUid)) {
+							currentScope.global.add(modifier);
 						} else {
-							modifierSet.add(modifier);
+							newScope.add(modifier);
 						}
 					});
 				} else {
-					allModifiers[scope] = modifiers;
+					currentScope[scope] = modifiers;
 				}
 			}
 		}
 	}
 
-	return { hast, allModifiers };
+	return { hast, modifierScopes: currentScope };
 }
 
 function collapseOsimDocument(osimComponents: OsimDocuments): ICollapseResult {

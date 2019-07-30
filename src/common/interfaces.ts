@@ -1,4 +1,4 @@
-export interface IAllModifiersObjectified {
+export interface IModifierNamesByScopeObjectified {
 	all: string[];
 	[scope: string]: string[];
 }

@@ -43,10 +43,10 @@ export interface IHast {
 
 export interface ICollapseResult {
 	hast: IHast;
-	allModifiers: IAllModifiers;
+	modifierScopes: IModifierScopes;
 }
 
-export interface IAllModifiers {
-	all: Set<string>;
+export interface IModifierScopes {
+	global: Set<string>;
 	[scope: string]: Set<string>;
 }

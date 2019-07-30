@@ -4,7 +4,13 @@ import { componentScopeDelimiter } from '../../common/consts';
 
 export const createModifiersManager = (): IModifierManager => {
 	const modifierCollection: IOsmiumModifiers = new Map<string, IModifierInstance>();
-	const proxyCollection: Map<ComponentUid, any> = new Map<ComponentUid, any>();
+	const componentCollection: Map<ComponentUid, any> = new Map<ComponentUid, any>();
+
+	function triggerModifierChange(modifier, value) {
+		modifier.value = value;
+		modifier.actions.forEach((action) => action(value));
+		modifier.listeners.forEach((listner) => listner());
+	}
 
 	function createModifierObjectProxy(modifier: IModifierInstance, modifierObject: any) {
 		return new Proxy(modifierObject, {
@@ -18,9 +24,7 @@ export const createModifiersManager = (): IModifierManager => {
 			},
 			set(target, prop: any, value) {
 				target[prop] = value;
-				modifier.value = value;
-				modifier.actions.forEach((action) => action(value));
-				modifier.listeners.forEach((listner) => listner());
+				triggerModifierChange(modifier, value);
 				return true;
 			},
 		});
@@ -47,10 +51,7 @@ export const createModifiersManager = (): IModifierManager => {
 				const modifierFullName = `${componentUid}${componentScopeDelimiter}${String(prop)}`;
 
 				if (modifierCollection.has(modifierFullName)) {
-					const modifier = modifierCollection.get(modifierFullName);
-					modifier.value = value;
-					modifier.actions.forEach((action) => action(value));
-					modifier.listeners.forEach((listner) => listner());
+					triggerModifierChange(modifierCollection.get(modifierFullName), value);
 					return true;
 				}
 
@@ -60,13 +61,14 @@ export const createModifiersManager = (): IModifierManager => {
 	}
 
 	return {
-		modifiers: proxyCollection,
+		modifiers: componentCollection,
 		addModifiers(modifierNames: string[]) {
 			modifierNames.forEach((fullModifierName) => {
 				const [componentUid]: string[] = fullModifierName.split(componentScopeDelimiter);
-				if (!proxyCollection.has(componentUid)) {
-					proxyCollection.set(componentUid, createComponentModifierProxy(componentUid));
+				if (!componentCollection.has(componentUid)) {
+					componentCollection.set(componentUid, createComponentModifierProxy(componentUid));
 				}
+
 				modifierCollection.set(fullModifierName, {
 					value: '',
 					listeners: [],
@@ -76,16 +78,15 @@ export const createModifiersManager = (): IModifierManager => {
 		},
 		addActions(modifierActions: IModifierActions) {
 			const removeActionsFuncs: (() => void)[] = [];
+
 			for (const [modifierName, actions] of Object.entries(modifierActions)) {
 				if (modifierCollection.has(modifierName)) {
-					modifierCollection
-						.get(modifierName)
-						.actions.splice(modifierCollection.get(modifierName).actions.length, 0, ...actions);
-
-					actions.forEach((action) => action(modifierCollection.get(modifierName).value));
+					const modifier = modifierCollection.get(modifierName);
+					modifierCollection.get(modifierName).actions.splice(modifier.actions.length, 0, ...actions);
+					actions.forEach((action) => action(modifier.value));
 
 					removeActionsFuncs.push(() => {
-						modifierCollection.get(modifierName).actions.filter((action) => !actions.includes(action));
+						modifier.actions.filter((action) => !actions.includes(action));
 					});
 				} else {
 					throw new Error(`cannot add new action to modifier: ${modifierName} because it does not exsists`);
@@ -104,8 +105,9 @@ export const createModifiersManager = (): IModifierManager => {
 			}
 		},
 		removeComponent(compinentUid: ComponentUid) {
-			if (proxyCollection.has(compinentUid)) {
-				proxyCollection.delete(compinentUid);
+			if (componentCollection.has(compinentUid)) {
+				componentCollection.delete(compinentUid);
+
 				for (const key of modifierCollection.keys()) {
 					if (key.startsWith(compinentUid)) {
 						modifierCollection.delete(key);

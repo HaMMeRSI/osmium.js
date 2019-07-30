@@ -4,6 +4,7 @@ module.exports = `
 		name: {{person.name}}
 		age: {{person.age}}
 		randomness: {{r.baba}}
+		randomness2: {{r.baba}}
 	</div>
 </template>
 
