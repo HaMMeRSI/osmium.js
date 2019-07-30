@@ -13,12 +13,12 @@ module.exports = `
 
 <script>
 	export default (modifiers, props) => {
-		modifiers['osim2UpdateFunction']((e) => {
-			modifiers['banana'](e.target.value);
-		});
+		modifiers.osim2UpdateFunction = (e) => {
+			modifiers.banana = e.target.value;
+		};
 
 		props((props) => {
-			modifiers['proper'](props.name + ' ' + props['sub-domain']);
+			modifiers.proper = props.name + ' ' + props['sub-domain'];
 		});
 	}
 </script>`;

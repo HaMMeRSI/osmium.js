@@ -1,13 +1,13 @@
 import { matchDynamicGetter, matchDynamicGetterName } from '../consts/regexes';
 import { IOsimNode } from '../runtime-interfaces';
-import { createModifier } from '../helpers/modifier-methods';
+import { addModifierAction } from '../helpers/modifier-methods';
 import { resolveObjectKey, getAccessorFromString } from '../helpers/objectFunctions';
 
 export default (text: string): IOsimNode => {
 	// const dom: Text = {} as any;
 	const dom: Text = document.createTextNode(text);
 	const textModifiers = text.match(matchDynamicGetter);
-	const modifiers = {};
+	const modifierActions = {};
 
 	if (textModifiers) {
 		dom.nodeValue = '';
@@ -18,7 +18,7 @@ export default (text: string): IOsimNode => {
 			const modifierName = brokenText[i].match(matchDynamicGetterName);
 
 			if (modifierName) {
-				const modifierAction = (value: string): void => {
+				const action = (value: string): void => {
 					if (typeof value === 'object') {
 						brokenText[i] = resolveObjectKey(getAccessorFromString(modifierName[0]), value);
 					} else {
@@ -28,10 +28,10 @@ export default (text: string): IOsimNode => {
 				};
 
 				dom.data = brokenText.join('');
-				createModifier(modifiers, modifierName[0].split('.')[0], modifierAction);
+				addModifierAction(modifierActions, modifierName[0].split('.')[0], action);
 			}
 		}
 	}
 
-	return { dom, modifiersActions: modifiers, requestedProps: {}, order: [], builtins: [] };
+	return { dom, modifiersActions: modifierActions, requestedProps: {}, order: [], builtins: [] };
 };

@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { collapseOsimDocument } from '../template/collapse-template';
 import buildComponent from '../template/build-component';
+import { IAllModifiersObjectified } from '../../common/interfaces';
 // const h = require('../../runtime/osim-component-builder/h').default;
 // const c = require('../../runtime/osim-component-builder/c').default;
 // const t = require('../../runtime/osim-component-builder/t').default;
@@ -12,7 +13,11 @@ import buildComponent from '../template/build-component';
 // console.log(aaa);
 function buildOsimEntry(osimComponents: OsimDocuments, output: string): void {
 	const collapsedHast: ICollapseResult = collapseOsimDocument(osimComponents);
-	const componentString = buildComponent(collapsedHast.hast);
+	const modifiers = Object.entries(collapsedHast.allModifiers).reduce((acc, [scope, modifiers]) => {
+		acc[scope] = Array.from(modifiers);
+		return acc;
+	}, {}) as IAllModifiersObjectified;
+	const componentString = buildComponent(collapsedHast.hast, modifiers);
 
 	const importStrings = [];
 	for (const [name, value] of Object.entries(osimComponents)) {
@@ -32,8 +37,10 @@ const funcs = {
 	${Object.values(Object.keys(osimComponents).map((name): string => name)).join(',\n\t')}
 };
 
+const allModifiers=${JSON.stringify(modifiers || [])}
+
 const target = document.getElementById('target');
-const osim = ${componentString}(target, funcs, ${JSON.stringify(collapsedHast.allModifiers)});
+const osim = ${componentString}(target,funcs,allModifiers);
 document.getElementById('target').appendChild(osim);\n`;
 
 	fs.writeFileSync(`${output}/osim-entry.js`, entryFile);

@@ -1,25 +1,20 @@
 import * as deepmerge from 'deepmerge';
-import { IOsmiumModifiers, IOsimNode, IOsimChilds } from '../../runtime-interfaces';
+import { IOsmiumModifiers, IOsimNode, IModifierManager } from '../../runtime-interfaces';
 import { runtimeDeepmergeOptions } from '../../helpers/deepmerge-options';
-import { componentScopeDelimiter } from '../../consts/delimiter';
 
-export const getConditionBuiltinEvaluationFunction = (childEvaluationFunction: (modifiers) => IOsimChilds, builtinPlaceHolder: Comment) => {
+export const getConditionBuiltinEvaluationFunction = (
+	childEvaluationFunction: (modifiers) => () => IOsimNode,
+	domPlaceHolder: Comment
+) => {
 	let childNodes: ChildNode[] = [];
 	let unregisterFromModfiers = null;
 
-	return (passedModifiers: IOsmiumModifiers): IOsimNode => {
-		let onodeBuiltin: IOsimNode = {
-			dom: document.createDocumentFragment(),
-			builtins: [],
-			modifiersActions: {},
-			order: [],
-			requestedProps: {},
-		};
-
+	return (passedModifiers: IOsmiumModifiers): ((modifierManager) => IOsimNode) => {
 		const evaluatedONode = childEvaluationFunction(passedModifiers);
+
 		if (evaluatedONode === null) {
 			if (childNodes.length > 0) {
-				childNodes[0].replaceWith(builtinPlaceHolder);
+				childNodes[0].replaceWith(domPlaceHolder);
 
 				for (let i = 1; i < childNodes.length; i++) {
 					childNodes[i].parentNode.removeChild(childNodes[i]);
@@ -29,21 +24,24 @@ export const getConditionBuiltinEvaluationFunction = (childEvaluationFunction: (
 				childNodes = [];
 				unregisterFromModfiers = null;
 			}
-		} else {
-			onodeBuiltin = deepmerge(onodeBuiltin, evaluatedONode, runtimeDeepmergeOptions);
-
-			const unregistrers = Object.entries(onodeBuiltin.modifiersActions).map(([fullModifierName, actions]) => {
-				const [componentUid, modifierName] = fullModifierName.split(componentScopeDelimiter);
-				return passedModifiers[componentUid][modifierName].addActions(actions);
-			});
-			unregisterFromModfiers = (): void => {
-				unregistrers.forEach((unregistrer) => unregistrer());
-			};
-
-			childNodes = Array.from(onodeBuiltin.dom.childNodes);
-			builtinPlaceHolder.replaceWith(onodeBuiltin.dom);
+			return null;
 		}
 
-		return onodeBuiltin;
+		return (modifierManager: IModifierManager) => {
+			let onodeBuiltin: IOsimNode = {
+				dom: document.createDocumentFragment(),
+				builtins: [],
+				modifiersActions: {},
+				order: [],
+				requestedProps: {},
+			};
+
+			const newONode = evaluatedONode();
+			unregisterFromModfiers = modifierManager.addActions(newONode.modifiersActions);
+			onodeBuiltin = deepmerge(onodeBuiltin, newONode, runtimeDeepmergeOptions);
+			childNodes = Array.from(onodeBuiltin.dom.childNodes);
+			domPlaceHolder.replaceWith(onodeBuiltin.dom);
+			return onodeBuiltin;
+		};
 	};
 };

@@ -1,7 +1,7 @@
-import { IModifierActions, ModifierAction, IModifier, IOsmiumModifiers } from '../runtime-interfaces';
-import { componentScopeDelimiter } from '../consts/delimiter';
+import { ModifierAction, IModifierF, IModifier, IModifierActions, IOsmiumModifiers } from '../runtime-interfaces';
+import { componentScopeDelimiter } from '../../common/consts';
 
-function getModifier(actions: ModifierAction[]): IModifier {
+function getModifier(actions: ModifierAction[]): IModifierF {
 	let value = '';
 	let listeners = [];
 
@@ -15,7 +15,7 @@ function getModifier(actions: ModifierAction[]): IModifier {
 		return value;
 	};
 
-	execute.addListner = (func, getProps: () => {}) => {
+	execute.addListener = (func, getProps: () => {}) => {
 		listeners.push(() => func(getProps()));
 		return (): void => {
 			listeners = listeners.filter((listner) => listner !== func);
@@ -40,44 +40,87 @@ function getModifier(actions: ModifierAction[]): IModifier {
 	return execute;
 }
 
-export const enhaceModifier = (modifierActions: IModifierActions, enhacedModifiers: IOsmiumModifiers): IOsmiumModifiers => {
+function createModifier(actions: ModifierAction[]): IModifier {
+	const modifier = {
+		value: '',
+		listeners: [],
+		actions,
+	};
+
+	return (new Proxy(modifier, {
+		get(target, key) {
+			if (key === 'addActions') {
+				return (newActions: ModifierAction[]) => {
+					const unregistrers = newActions.map((action) => {
+						actions.push(action);
+						action(target.value);
+
+						return (): void => {
+							actions = actions.filter((listner) => listner !== action);
+						};
+					});
+
+					return (): void => {
+						unregistrers.forEach((unregistrer) => unregistrer());
+					};
+				};
+			} else if (key === 'addListener') {
+				return (func, getProps: () => {}) => {
+					target.listeners.push(() => func(getProps()));
+					return (): void => {
+						target.listeners = target.listeners.filter((listner) => listner !== func);
+					};
+				};
+			} else {
+				return modifier.value;
+			}
+		},
+		set(target, key, value) {
+			target.value = value;
+			return true;
+		},
+	}) as unknown) as IModifier;
+}
+
+export const addActionsToModifiers = (modifierActions: IModifierActions, modifiers: IOsmiumModifiers): IOsmiumModifiers => {
 	for (const [fullDynamicGetter, actions] of Object.entries(modifierActions)) {
 		const [componentUid, modifierName]: string[] = fullDynamicGetter.split(componentScopeDelimiter);
 
-		if (enhacedModifiers[componentUid]) {
-			if (enhacedModifiers[componentUid][modifierName]) {
-				enhacedModifiers[componentUid][modifierName].addActions(actions);
+		if (modifiers[componentUid]) {
+			if (modifiers[componentUid][modifierName]) {
+				modifiers[componentUid][modifierName].addActions(actions);
 			} else {
-				enhacedModifiers[componentUid][modifierName] = getModifier(actions);
+				modifiers[componentUid][modifierName] = createModifier(actions);
 			}
 		} else {
-			enhacedModifiers[componentUid] = {
-				[modifierName]: getModifier(actions),
+			modifiers[componentUid] = {
+				[modifierName]: createModifier(actions),
 			};
 		}
 	}
-	return enhacedModifiers;
+	return modifiers;
 };
 
-export const initModifiers = (modifiers: string[], enhacedModifiers: IOsmiumModifiers): IOsmiumModifiers => {
-	for (const fullModifierName of modifiers) {
+export const bootstrapModifiers = (modifiersToBootstrap: string[], modifiers: IOsmiumModifiers): IOsmiumModifiers => {
+	modifiersToBootstrap.forEach((fullModifierName) => {
 		const [componentUid, modifierName]: string[] = fullModifierName.split(componentScopeDelimiter);
 
-		if (enhacedModifiers[componentUid]) {
-			enhacedModifiers[componentUid][modifierName] = getModifier([]);
+		if (modifiers[componentUid]) {
+			modifiers[componentUid][modifierName] = createModifier([]);
 		} else {
-			enhacedModifiers[componentUid] = {
-				[modifierName]: getModifier([]),
+			modifiers[componentUid] = {
+				[modifierName]: createModifier([]),
 			};
 		}
-	}
-	return enhacedModifiers;
+	});
+
+	return modifiers;
 };
 
-export const createModifier = (modifiers: IModifierActions, modifier: string, modifierAction: ModifierAction) => {
-	if (modifiers[modifier]) {
-		modifiers[modifier].push(modifierAction);
+export const addModifierAction = (modifierActions: IModifierActions, modifier: string, modifierAction: ModifierAction) => {
+	if (modifierActions[modifier]) {
+		modifierActions[modifier].push(modifierAction);
 	} else {
-		modifiers[modifier] = [modifierAction];
+		modifierActions[modifier] = [modifierAction];
 	}
 };

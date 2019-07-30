@@ -1,59 +1,78 @@
-import { IOsimNode, RegisterToProps, IOsmiumComponentModifiers, IOsmiumModifiers } from '../runtime-interfaces';
-import { enhaceModifier, initModifiers } from '../helpers/modifier-methods';
-import { componentScopeDelimiter } from '../consts/delimiter';
+import { IOsimNode, RegisterToProps, IOsmiumComponentModifiers } from '../runtime-interfaces';
+import { createModifiersManager } from '../helpers/modifier-manager';
+import { componentScopeDelimiter } from '../../common/consts';
+import { IAllModifiersObjectified } from '../../common/interfaces';
 
 type Funcs = {
 	[name: string]: (modifiers: IOsmiumComponentModifiers, registerToProps: RegisterToProps) => void;
 };
 
-function computeOsimNode(osmiumNode: IOsimNode, componentFuncs: Funcs, modifiers: IOsmiumModifiers) {
-	for (const { uid, componentName } of osmiumNode.order) {
-		const requestedProps = osmiumNode.requestedProps[uid];
-		const rgisterPropsChange: RegisterToProps = (f): void => {
-			const getProps = () => {
-				const props = {};
-				for (const { attr, modifier } of Object.values(requestedProps)) {
-					const [modiferComponentUid, modifierName] = modifier.split(componentScopeDelimiter);
-					props[attr] = modifiers[modiferComponentUid][modifierName]();
+export default (
+	osmiumApp: IOsimNode
+): ((target: HTMLElement, componentFuncs: Funcs, allModifiers: IAllModifiersObjectified) => Node) => (
+	target,
+	componentFuncs,
+	modifierNamesByScope
+): Node => {
+	const modifiersManager = createModifiersManager();
+
+	const computeOsimNode = (osmiumNode: IOsimNode) => {
+		for (const { uid, componentName } of osmiumNode.order) {
+			const requestedProps = osmiumNode.requestedProps[uid];
+			const rgisterPropsChange: RegisterToProps = (f): void => {
+				const getProps = () => {
+					const props = {};
+					for (const { attr, modifier } of Object.values(requestedProps)) {
+						const [modiferComponentUid, modifierName] = modifier.split(componentScopeDelimiter);
+						props[attr] = modifiersManager.modifiers.get(modiferComponentUid)[modifierName];
+					}
+
+					return props;
+				};
+
+				for (const { modifier } of Object.values(requestedProps)) {
+					modifiersManager.addListener(modifier, f, getProps);
 				}
 
-				return props;
+				f(getProps());
 			};
 
-			for (const { modifier } of Object.values(requestedProps)) {
-				const [modiferComponentUid, modifierName] = modifier.split(componentScopeDelimiter);
-				modifiers[modiferComponentUid][modifierName].addListner(f, getProps);
-			}
-
-			f(getProps());
-		};
-
-		const componentFunction = componentFuncs[componentName];
-		componentFunction(modifiers[uid], rgisterPropsChange);
-	}
-
-	for (const builtin of osmiumNode.builtins) {
-		const evaluationFunction = () => {
-			const osimBuiltinNode = builtin.evaluationFunction(modifiers);
-			computeOsimNode(osimBuiltinNode, componentFuncs, modifiers);
-		};
-		evaluationFunction();
-
-		for (const requestedModifier of builtin.usedModifiers) {
-			const [uid, action] = requestedModifier.split(componentScopeDelimiter);
-			modifiers[uid][action].addListner(evaluationFunction, () => null);
+			const componentFunction = componentFuncs[componentName];
+			componentFunction(modifiersManager.modifiers.get(uid), rgisterPropsChange);
 		}
-	}
-}
 
-export default (osmiumApp: IOsimNode): ((target: HTMLElement, componentFuncs: Funcs, allModifiers: string[]) => Node) => (target, componentFuncs, allModifiers): Node => {
-	target.appendChild(osmiumApp.dom);
+		for (const builtin of osmiumNode.builtins) {
+			const evaluationFunction = () => {
+				const evaluatedBuiltinFunc = builtin.evaluationFunction(modifiersManager.modifiers);
+
+				if (evaluatedBuiltinFunc === null) {
+					new Set(
+						modifierNamesByScope[builtin.uid].map((modifier) => modifier.split(componentScopeDelimiter)[0])
+					).forEach((componentUid) => {
+						if (modifiersManager.modifiers.has(componentUid)) {
+							modifiersManager.removeComponent(componentUid);
+						}
+					});
+				} else {
+					modifiersManager.addModifiers(modifierNamesByScope[builtin.uid]);
+					const osimBuiltinNode = evaluatedBuiltinFunc(modifiersManager);
+					modifiersManager.addActions(osimBuiltinNode.modifiersActions);
+					computeOsimNode(osimBuiltinNode);
+				}
+			};
+			evaluationFunction();
+
+			for (const requestedModifier of builtin.usedModifiers) {
+				modifiersManager.addListener(requestedModifier, evaluationFunction);
+			}
+		}
+	};
+
 	osmiumApp.order.splice(0, 0, { uid: 'root', componentName: 'root' });
-	const modifiers: IOsmiumModifiers = {};
-	initModifiers(allModifiers, modifiers);
-
-	enhaceModifier(osmiumApp.modifiersActions, modifiers);
-	computeOsimNode(osmiumApp, componentFuncs, modifiers);
+	modifiersManager.addModifiers(modifierNamesByScope.all);
+	modifiersManager.addActions(osmiumApp.modifiersActions);
+	computeOsimNode(osmiumApp);
+	target.appendChild(osmiumApp.dom);
 
 	return osmiumApp.dom;
 };

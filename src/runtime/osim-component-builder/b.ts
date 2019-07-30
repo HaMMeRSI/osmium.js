@@ -2,19 +2,25 @@ import { IOsimChilds } from './../runtime-interfaces';
 import { IOsimNode, IBuiltins } from '../runtime-interfaces';
 import { getConditionBuiltinEvaluationFunction } from './builtins/osim-if';
 
-export default (nodeName: string, usedModifiers: string[] = [], childEvaluationFunction: (modifiers) => IOsimChilds): IOsimNode => {
-	const builtinPlaceHolder = document.createComment('b-ph');
+export default (
+	nodeName: string,
+	usedModifiers: string[] = [],
+	uid: string,
+	childEvaluationFunction: (modifiers) => () => IOsimChilds
+): IOsimNode => {
+	const domPlaceHolder = document.createComment('b-ph');
 
 	const builtins: IBuiltins[] = [];
 	if (nodeName === 'osim-if') {
 		builtins.push({
+			uid,
 			usedModifiers,
-			evaluationFunction: getConditionBuiltinEvaluationFunction(childEvaluationFunction, builtinPlaceHolder),
+			evaluationFunction: getConditionBuiltinEvaluationFunction(childEvaluationFunction, domPlaceHolder),
 		});
 	}
 
 	return {
-		dom: builtinPlaceHolder,
+		dom: domPlaceHolder,
 		modifiersActions: {},
 		requestedProps: {},
 		builtins,

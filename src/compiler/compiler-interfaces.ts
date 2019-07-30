@@ -16,13 +16,12 @@ export interface IOsimDocument {
 }
 
 export interface IHastAttribute {
-	[Symbol.iterator]();
 	name: string;
 	value: string;
 }
 
 export interface IOsimPropModifier {
-	componentScope: string;
+	componentScope?: string;
 	value: string;
 }
 
@@ -30,14 +29,24 @@ export interface IHastObjectAttributes {
 	[name: string]: IOsimPropModifier;
 }
 
-export interface ISortedParentProps {
+export interface IProps {
 	staticProps: IHastObjectAttributes;
 	dynamicProps: IHastObjectAttributes;
 }
 
-export type Hast = any;
+export interface IHast {
+	nodeName: string;
+	attrs: IHastAttribute[];
+	childNodes: IHast[];
+	value?: string;
+}
 
 export interface ICollapseResult {
-	hast: Hast;
-	allModifiers: string[];
+	hast: IHast;
+	allModifiers: IAllModifiers;
+}
+
+export interface IAllModifiers {
+	all: Set<string>;
+	[scope: string]: Set<string>;
 }

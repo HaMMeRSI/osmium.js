@@ -1,5 +1,5 @@
 import { ModifierAction, IOsimChilds } from './../runtime-interfaces';
-import { createModifier } from '../helpers/modifier-methods';
+import { addModifierAction } from '../helpers/modifier-methods';
 import { matchDynamicGetterName } from '../consts/regexes';
 import * as deepmerge from 'deepmerge';
 import { IOsimNode, IModifierActions, IHastAttribute } from '../runtime-interfaces';
@@ -7,14 +7,14 @@ import { runtimeDeepmergeOptions } from '../helpers/deepmerge-options';
 import { resolveObjectKey, getAccessorFromString } from '../helpers/objectFunctions';
 
 export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: IOsimChilds = []): IOsimNode => {
-	const modifiersActions: IModifierActions = {};
+	const modifierActions: IModifierActions = {};
 	const dom = document.createElement(tagName);
 
 	attrs.forEach(([name, value]: { [Symbol.iterator](); name: string; value: string }): void => {
 		const modifierName: RegExpMatchArray = value.match(matchDynamicGetterName);
 
 		if (modifierName) {
-			let modifierAction: ModifierAction = (newAttrValue): void => {
+			let action: ModifierAction = (newAttrValue): void => {
 				if (typeof value === 'object') {
 					dom.setAttribute(name, resolveObjectKey(getAccessorFromString(modifierName[0]), newAttrValue));
 				} else {
@@ -23,7 +23,7 @@ export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: I
 			};
 
 			if (name.startsWith('@')) {
-				modifierAction = (newAttrValue: (e) => void): void => {
+				action = (newAttrValue: (e) => void): void => {
 					// This test is because auto activate action in enhaceModifier
 					if (newAttrValue) {
 						const eventName = name.split('@')[1];
@@ -33,7 +33,7 @@ export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: I
 				};
 			}
 
-			createModifier(modifiersActions, modifierName[0].split('.')[0], modifierAction);
+			addModifierAction(modifierActions, modifierName[0].split('.')[0], action);
 		} else {
 			dom.setAttribute(name, value);
 		}
@@ -42,7 +42,7 @@ export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: I
 	let onodeh: IOsimNode = {
 		dom,
 		builtins: [],
-		modifiersActions,
+		modifiersActions: modifierActions,
 		order: [],
 		requestedProps: {},
 	};

@@ -9,9 +9,9 @@ module.exports = `
 
 <script>
 	export default (modifiers, props) => {
-		modifiers['r']({
+		modifiers.r = {
 			baba: '23f'
-		});
+		};
 	}
 </script>`;
 
