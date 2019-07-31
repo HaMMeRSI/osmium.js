@@ -17,7 +17,7 @@ export default (text: string): IOsimNode => {
 			const modifierName = brokenText[i].match(matchDynamicGetterName);
 
 			if (modifierName) {
-				const action = (value: string): void => {
+				const action = (value): void => {
 					if (typeof value === 'object') {
 						brokenText[i] = resolveObjectKey(getAccessorFromString(modifierName[0]), value);
 					} else {

@@ -1,10 +1,11 @@
-import { IOsimChilds } from './../runtime-interfaces';
+import { IBuiltinData } from './../runtime-interfaces';
 import { IOsimNode, IBuiltins } from '../runtime-interfaces';
 import { getConditionBuiltinEvaluationFunction } from './builtins/osim-if';
+import { getLoopBuiltinEvaluationFunction } from './builtins/loop-builtin';
 
 export default (
 	nodeName: string,
-	usedModifiers: string[] = [],
+	builtinData: IBuiltinData,
 	uid: string,
 	childEvaluationFunction: (modifiers) => () => IOsimNode
 ): IOsimNode => {
@@ -14,8 +15,20 @@ export default (
 	if (nodeName === 'osim-if') {
 		builtins.push({
 			uid,
-			usedModifiers,
+			type: 'condition',
+			builtinData,
 			evaluationFunction: getConditionBuiltinEvaluationFunction(childEvaluationFunction, domPlaceHolder),
+		});
+	} else if (nodeName === 'osim-for') {
+		builtins.push({
+			uid,
+			type: 'loop',
+			builtinData,
+			evaluationFunction: getLoopBuiltinEvaluationFunction(
+				childEvaluationFunction,
+				builtinData.loop.split(' ')[0],
+				domPlaceHolder
+			),
 		});
 	}
 

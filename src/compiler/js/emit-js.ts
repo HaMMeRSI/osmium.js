@@ -7,11 +7,11 @@ import { IModifierNamesByScopeObjectified } from '../../common/interfaces';
 
 function buildOsimEntry(osimComponents: OsimDocuments, output: string): void {
 	const collapsedHast: ICollapseResult = collapseOsimDocument(osimComponents);
-	const modifiers = Object.entries(collapsedHast.modifierScopes).reduce((acc, [scope, modifiers]) => {
+	const modifiersByScope = Object.entries(collapsedHast.modifierScopes).reduce((acc, [scope, modifiers]) => {
 		acc[scope] = Array.from(modifiers);
 		return acc;
 	}, {}) as IModifierNamesByScopeObjectified;
-	const componentString = buildComponent(collapsedHast.hast, modifiers);
+	const componentString = buildComponent(collapsedHast.hast, modifiersByScope);
 
 	const importStrings = [];
 	for (const [name, value] of Object.entries(osimComponents)) {
@@ -31,18 +31,18 @@ const funcs = {
 	${Object.values(Object.keys(osimComponents).map((name): string => name)).join(',\n\t')}
 };
 
-const allModifiers=${JSON.stringify(modifiers || [])}
+const modifierScopes=${JSON.stringify(modifiersByScope)}
 
 const target = document.getElementById('target');
-const osim = ${componentString}(target,funcs,allModifiers);
+const osim = ${componentString}(target,funcs,modifierScopes);
 document.getElementById('target').appendChild(osim);\n`;
 
 	fs.writeFileSync(`${output}/osim-entry.js`, entryFile);
 }
 
 function emitJsFiles(osimComponents: OsimDocuments, output: string): void {
-	for (const [name, value] of Object.entries(osimComponents)) {
-		fs.writeFileSync(`${output}/${name}.js`, value.script);
+	for (const [, value] of Object.entries(osimComponents)) {
+		fs.writeFileSync(`${output}/${path.basename(value.path)}`, value.script);
 	}
 
 	buildOsimEntry(osimComponents, output);

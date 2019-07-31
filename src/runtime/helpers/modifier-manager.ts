@@ -7,7 +7,6 @@ export const createModifiersManager = (): IModifierManager => {
 	const componentCollection: Map<ComponentUid, any> = new Map<ComponentUid, any>();
 
 	function triggerModifierChange(modifier, value) {
-		modifier.value = value;
 		modifier.actions.forEach((action) => action(value));
 		modifier.listeners.forEach((listner) => listner());
 	}
@@ -51,7 +50,9 @@ export const createModifiersManager = (): IModifierManager => {
 				const modifierFullName = `${componentUid}${componentScopeDelimiter}${String(prop)}`;
 
 				if (modifierCollection.has(modifierFullName)) {
-					triggerModifierChange(modifierCollection.get(modifierFullName), value);
+					const modifier = modifierCollection.get(modifierFullName);
+					modifier.value = value;
+					triggerModifierChange(modifier, value);
 					return true;
 				}
 

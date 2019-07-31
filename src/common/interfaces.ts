@@ -1,4 +1,4 @@
 export interface IModifierNamesByScopeObjectified {
-	all: string[];
+	global: string[];
 	[scope: string]: string[];
 }

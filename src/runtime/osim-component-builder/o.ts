@@ -62,14 +62,14 @@ export default (
 			};
 			evaluationFunction();
 
-			for (const requestedModifier of builtin.usedModifiers) {
+			for (const requestedModifier of builtin.builtinData.usedModifiers) {
 				modifiersManager.addListener(requestedModifier, evaluationFunction);
 			}
 		}
 	};
 
 	osmiumApp.order.splice(0, 0, { uid: 'root', componentName: 'root' });
-	modifiersManager.addModifiers(modifierNamesByScope.all);
+	modifiersManager.addModifiers(modifierNamesByScope.global);
 	modifiersManager.addActions(osmiumApp.modifiersActions);
 	computeOsimNode(osmiumApp);
 	target.appendChild(osmiumApp.dom);

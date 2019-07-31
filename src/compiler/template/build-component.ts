@@ -29,19 +29,28 @@ function componentBuilder(node: IHast, modifiers: IModifierNamesByScopeObjectifi
 	if (node.nodeName === 'osim') {
 		const attrs = node.attrs as IHastAttribute[];
 		const dynamicGettersForCondition = attrs[0].value.match(matchDynamicGetter);
-
+		const usedModifiers = dynamicGettersForCondition
+			? dynamicGettersForCondition.map((x) => `'${x.replace(/[{}]/g, '')}'`).join(',')
+			: '';
 		if (attrs[0].name === 'if') {
+			const nodeName = `'${node.nodeName}-${attrs[0].name}'`;
 			const newIf = dynamicGettersForCondition.reduce((acc, modifier) => {
 				const splitted = modifier.match(matchDynamicGetterName)[0].split(componentScopeDelimiter);
 				return acc.replace(modifier, `modifiers.get('${splitted[0]}').${splitted[1]}`);
 			}, attrs[0].value);
-
-			return `b('${node.nodeName}-${attrs[0].name}',[${dynamicGettersForCondition
-				.map((x) => `'${x.replace(/[{}]/g, '')}'`)
-				.join(',')}],'${osimUid.value}',(modifiers)=>(${newIf})?()=>f([${childrens.join(',')}]):null)`;
+			const evaluationFunc = `(modifiers)=>(${newIf})?()=>f([${childrens.join(',')}]):null`;
+			return `b(${nodeName},{usedModifiers:[${usedModifiers}]},'${osimUid.value}',${evaluationFunc})`;
+		} else if (attrs[0].name === 'for') {
+			const nodeName = `'${node.nodeName}-${attrs[0].name}'`;
+			const [componentUid, loopObject] = dynamicGettersForCondition[0]
+				.match(matchDynamicGetterName)[0]
+				.split(componentScopeDelimiter);
+			const childrensString = childrens.join(',');
+			const evaluationFunc = `(modifiers)=>()=>modifiers.get('${componentUid}').${loopObject}.map(i=>({i,onode:f([${childrensString}])}))`;
+			return `b(${nodeName},{usedModifiers:[${usedModifiers}],loop:'${attrs[0].value}'},'${osimUid.value}',${evaluationFunc})`;
 		}
 
-		return `b('${node.nodeName}',[${dynamicGettersForCondition.join(',')}],()=>f([${childrens.join(',')}]))`;
+		return `b(${node.nodeName},[${dynamicGettersForCondition.join(',')}],()=>f([${childrens.join(',')}]))`;
 	} else if (osimUid) {
 		return `c('${node.nodeName}',${parseAttrs(node.attrs)},[${childrens.join(',')}])`;
 	} else if (node.nodeName === '#document-fragment') {

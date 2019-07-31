@@ -49,9 +49,15 @@ export interface IRequestedProps {
 	[componentUid: string]: IComponentProps[];
 }
 
+export interface IBuiltinData {
+	usedModifiers: string[];
+	loop?: string;
+}
+
 export interface IBuiltins {
 	uid: string;
-	usedModifiers: string[];
+	type: string;
+	builtinData: IBuiltinData;
 	evaluationFunction: (modifiers: IOsmiumModifiers) => (modifierManager: IModifierManager) => IOsimNode;
 }
 

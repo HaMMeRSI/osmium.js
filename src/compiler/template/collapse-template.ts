@@ -126,10 +126,10 @@ function collaspseHast(
 		} else if (child.childNodes && child.childNodes.length > 0) {
 			let newScope: Set<string> = currentScope.global;
 			if (child.nodeName === 'osim') {
-				const scope = `${child.nodeName}${uniqid.time()}`;
+				const osimUid = `${child.nodeName}${uniqid.time()}`;
 				newScope = new Set<string>();
-				currentScope[scope] = newScope;
-				child.attrs.push({ name: 'osim:uid', value: scope });
+				currentScope[osimUid] = newScope;
+				child.attrs.push({ name: 'osim:uid', value: osimUid });
 			}
 
 			const { modifierScopes } = collaspseHast(currentOsimDocument, subDocuments, child, props, componentUid);
