@@ -37,10 +37,7 @@ function resolveModifiers(hastNode: IHast, parentProps: IProps, componentScope: 
 				const modifierName = dynamicGetter.match(matchDynamicGetterName)[0].split('.')[0];
 
 				if (modifierName in parentProps.staticProps) {
-					hastNode.value = hastNode.value.replace(
-						getSpecificMatchDynamicGetter(dynamicGetterName),
-						parentProps.staticProps[modifierName].value
-					);
+					hastNode.value = hastNode.value.replace(getSpecificMatchDynamicGetter(dynamicGetterName), parentProps.staticProps[modifierName].value);
 				} else if (modifierName in parentProps.dynamicProps) {
 					const { componentScope, value } = parentProps.dynamicProps[modifierName];
 
@@ -50,10 +47,7 @@ function resolveModifiers(hastNode: IHast, parentProps: IProps, componentScope: 
 					);
 				} else {
 					const newModifier = `${componentScope}${componentScopeDelimiter}${dynamicGetterName}`;
-					hastNode.value = hastNode.value.replace(
-						getSpecificMatchDynamicGetter(dynamicGetterName),
-						`{{${newModifier}}}`
-					);
+					hastNode.value = hastNode.value.replace(getSpecificMatchDynamicGetter(dynamicGetterName), `{{${newModifier}}}`);
 					componentModifiers.add(newModifier.split('.')[0]);
 				}
 			}
@@ -89,13 +83,7 @@ function createPropsForChild(attrs: IHastAttribute[]): IProps {
 	};
 }
 
-function collaspseHast(
-	currentOsimDocument: IOsimDocument,
-	subDocuments: OsimDocuments,
-	hast: IHast,
-	props: IProps,
-	componentUid: string
-): ICollapseResult {
+function collaspseHast(currentOsimDocument: IOsimDocument, subDocuments: OsimDocuments, hast: IHast, props: IProps, componentUid: string): ICollapseResult {
 	const currentScope: IModifierScopes = {
 		global: new Set<string>(),
 	};

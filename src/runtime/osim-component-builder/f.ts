@@ -6,7 +6,7 @@ export default (childs = []): IOsimNode => {
 	let onodeFragment: IOsimNode = {
 		dom: document.createDocumentFragment(),
 		builtins: [],
-		modifiersActions: {},
+		removers: [],
 		order: [],
 		requestedProps: {},
 	};

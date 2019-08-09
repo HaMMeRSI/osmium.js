@@ -1,12 +1,11 @@
 import { matchDynamicGetter, matchDynamicGetterName } from '../consts/regexes';
-import { IOsimNode } from '../runtime-interfaces';
-import { addModifierAction } from '../helpers/modifier-methods';
+import { IOsimNode, IModifierManager } from '../runtime-interfaces';
 import { resolveObjectKey, getAccessorFromString } from '../helpers/objectFunctions';
 
-export default (text: string): IOsimNode => {
+export default (modifierManager: IModifierManager) => (text: string): IOsimNode => {
 	const dom: Text = document.createTextNode(text);
 	const textModifiers = text.match(matchDynamicGetter);
-	const modifierActions = {};
+	const removers: (() => void)[] = [];
 
 	if (textModifiers) {
 		dom.nodeValue = '';
@@ -27,10 +26,10 @@ export default (text: string): IOsimNode => {
 				};
 
 				dom.data = brokenText.join('');
-				addModifierAction(modifierActions, modifierName[0].split('.')[0], action);
+				removers.push(modifierManager.addAction(modifierName[0], action));
 			}
 		}
 	}
 
-	return { dom, modifiersActions: modifierActions, requestedProps: {}, order: [], builtins: [] };
+	return { dom, removers, requestedProps: {}, order: [], builtins: [] };
 };

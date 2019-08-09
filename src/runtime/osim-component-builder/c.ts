@@ -8,7 +8,7 @@ export default (componentName: string, props, childs): IOsimNode => {
 	let onodeComponent: IOsimNode = {
 		dom: document.createDocumentFragment(),
 		builtins: [],
-		modifiersActions: {},
+		removers: [],
 		order: [{ componentName, uid }],
 		requestedProps: {},
 	};

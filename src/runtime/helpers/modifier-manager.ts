@@ -1,121 +1,129 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { IModifierActions, IOsmiumModifiers, IModifierInstance, ComponentUid, IModifierManager } from '../runtime-interfaces';
+import { ComponentUid, IModifierManager, ModifierAction } from '../runtime-interfaces';
 import { componentScopeDelimiter } from '../../common/consts';
+import { resolveObjectKey } from './objectFunctions';
+interface ITeraidKeys {
+	[key: string]: ITeraid;
+}
+type ITeraid = ITeraidKeys & {
+	$actions: ModifierAction[];
+	$listeners: (() => void)[];
+};
 
-export const createModifiersManager = (): IModifierManager => {
-	const modifierCollection: IOsmiumModifiers = new Map<string, IModifierInstance>();
-	const componentCollection: Map<ComponentUid, any> = new Map<ComponentUid, any>();
+function createBaseTeraid(): ITeraid {
+	const teraid = Object.create(null);
+	teraid.$actions = [];
+	teraid.$listeners = [];
 
-	function triggerModifierChange(modifier, value) {
-		modifier.actions.forEach((action) => action(value));
-		modifier.listeners.forEach((listner) => listner());
-	}
+	return teraid;
+}
 
-	function createModifierObjectProxy(modifier: IModifierInstance, modifierObject: any) {
-		return new Proxy(modifierObject, {
-			get(target, prop: any) {
-				const objectValue = target[prop];
-				if (typeof objectValue === 'object') {
-					return createModifierObjectProxy(modifier, objectValue);
-				}
+function callAllEffects(model, effects) {
+	Object.entries(effects).forEach(([key, value]: any) => {
+		if (key === '$actions') {
+			value.forEach((action) => action(model));
+		} else if (key === '$listeners') {
+			value.forEach((listener) => listener());
+		} else {
+			callAllEffects(model[key], value);
+		}
+	});
+}
+function initAllEffects(model, effects) {
+	Object.entries(model).forEach(([key, value]: any) => {
+		effects[key] = createBaseTeraid();
+		initAllEffects(model[key], value);
+	});
+}
 
-				return objectValue;
-			},
-			set(target, prop: any, value) {
-				target[prop] = value;
-				triggerModifierChange(modifier, value);
-				return true;
-			},
-		});
-	}
+function createProxer(model, effects) {
+	return new Proxy(model, {
+		get(target, prop: any) {
+			if (!(prop in target)) {
+				target[prop] = Object.create(null);
+				effects[prop] = createBaseTeraid();
+			}
 
-	function createComponentModifierProxy(componentUid: ComponentUid): any {
-		const obj: { [componentUid: string]: IModifierInstance } = {};
-		return new Proxy(obj, {
-			get(_, prop: any) {
-				const modifierFullName = `${componentUid}${componentScopeDelimiter}${String(prop)}`;
-				if (modifierCollection.has(modifierFullName)) {
-					const modifier = modifierCollection.get(modifierFullName);
+			if (typeof target[prop] === 'object') {
+				return createProxer(target[prop], effects[prop]);
+			}
 
-					if (typeof modifier.value === 'object') {
-						return createModifierObjectProxy(modifier, modifier.value);
-					}
+			return target[prop];
+		},
+		set(target, prop: any, value) {
+			target[prop] = value;
 
-					return modifier.value;
-				}
+			if (prop in effects) {
+				callAllEffects(target[prop], effects[prop]);
+			} else {
+				effects[prop] = createBaseTeraid();
+				initAllEffects(value, effects[prop]);
+			}
 
-				throw new Error(`modifier: ${String(prop)} does not exsists`);
-			},
-			set(_, prop: any, value) {
-				const modifierFullName = `${componentUid}${componentScopeDelimiter}${String(prop)}`;
+			return true;
+		},
+	});
+}
 
-				if (modifierCollection.has(modifierFullName)) {
-					const modifier = modifierCollection.get(modifierFullName);
-					modifier.value = value;
-					triggerModifierChange(modifier, value);
-					return true;
-				}
-
-				throw new Error(`modifier: ${String(prop)} does not exsists`);
-			},
-		});
-	}
+export default (): IModifierManager => {
+	// const modifierCollection: IOsmiumModifiers = new Map<string, IModifierInstance>();
+	const modelCollection: Map<ComponentUid, any> = new Map<ComponentUid, any>();
+	const effectsCollection: Map<ComponentUid, any> = new Map<ComponentUid, any>();
 
 	return {
-		modifiers: componentCollection,
-		addModifiers(modifierNames: string[]) {
-			modifierNames.forEach((fullModifierName) => {
-				const [componentUid]: string[] = fullModifierName.split(componentScopeDelimiter);
-				if (!componentCollection.has(componentUid)) {
-					componentCollection.set(componentUid, createComponentModifierProxy(componentUid));
+		modifiers: new Proxy(Object.create(null), {
+			get(_, prop: any) {
+				return createProxer(modelCollection.get(prop), effectsCollection.get(prop));
+			},
+			set: () => false,
+		}),
+		addAction(fullModifierName: string, modifierAction: ModifierAction) {
+			const [componentUid, path] = fullModifierName.split('_');
+			if (!effectsCollection.has(componentUid)) {
+				effectsCollection.set(componentUid, Object.create(null));
+				modelCollection.set(componentUid, Object.create(null));
+			}
+
+			let currModel = modelCollection.get(componentUid);
+			const properties = path.replace(/\[(\w+)\]/g, '.$1').split('.');
+			const obj = properties.reduce((acc: ITeraid, curr: string) => {
+				if (!(curr in acc)) {
+					acc[curr] = createBaseTeraid();
 				}
 
-				modifierCollection.set(fullModifierName, {
-					value: '',
-					listeners: [],
-					actions: [],
-				});
-			});
-		},
-		addActions(modifierActions: IModifierActions) {
-			const removeActionsFuncs: (() => void)[] = [];
-
-			for (const [modifierName, actions] of Object.entries(modifierActions)) {
-				if (modifierCollection.has(modifierName)) {
-					const modifier = modifierCollection.get(modifierName);
-					modifierCollection.get(modifierName).actions.splice(modifier.actions.length, 0, ...actions);
-					actions.forEach((action) => action(modifier.value));
-
-					removeActionsFuncs.push(() => {
-						modifier.actions.filter((action) => !actions.includes(action));
-					});
+				if (currModel && curr in currModel) {
+					currModel = currModel[curr];
 				} else {
-					throw new Error(`cannot add new action to modifier: ${modifierName} because it does not exsists`);
+					currModel = null;
 				}
-			}
 
-			return () => {
-				removeActionsFuncs.forEach((remover) => remover());
-			};
-		},
-		addListener(modifierName, func, getProps = () => null) {
-			if (modifierCollection.has(modifierName)) {
-				modifierCollection.get(modifierName).listeners.push(() => func(getProps()));
-			} else {
-				throw new Error(`cannot add listener to ${modifierName} because it does not exists`);
+				return acc[curr];
+			}, effectsCollection.get(componentUid)) as ITeraid;
+
+			if (currModel) {
+				modifierAction(currModel);
 			}
+			obj.$actions.push(modifierAction);
+			return () => obj.$actions.splice(obj.$actions.indexOf(modifierAction), 1);
+		},
+		addListener(fullModifierName, func, getProps = () => null) {
+			const [componentUid, path] = fullModifierName.split('_');
+			const properties = path.replace(/\[(\w+)\]/g, '.$1').split('.');
+			const obj = properties.reduce((acc: ITeraid, curr: string) => {
+				if (!(curr in acc)) {
+					acc[curr] = createBaseTeraid();
+				}
+
+				return acc[curr];
+			}, effectsCollection.get(componentUid)) as ITeraid;
+
+			const listener = () => func(getProps());
+			obj.$listeners.push(listener);
+			return () => obj.$listeners.splice(obj.$listeners.indexOf(listener), 1);
 		},
 		removeComponent(compinentUid: ComponentUid) {
-			if (componentCollection.has(compinentUid)) {
-				componentCollection.delete(compinentUid);
-
-				for (const key of modifierCollection.keys()) {
-					if (key.startsWith(compinentUid)) {
-						modifierCollection.delete(key);
-					}
-				}
-			} else {
-				throw new Error(`cannot delete ${compinentUid} because it does not exists`);
+			if (modelCollection.has(compinentUid)) {
+				modelCollection.delete(compinentUid);
 			}
 		},
 	};

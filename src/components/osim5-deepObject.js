@@ -1,21 +1,11 @@
 module.exports = `
 <template>
-	<div class='osim5' id='osim55' name="{{person.name}}">
-		name: {{person.name}}
-		age: {{person.age}}
-		randomness: {{r.baba}}
-		randomness2: {{r.baba}}
-	</div>
+	abada: {{person.name.first}}<br/>
+	subaba: {{subaba}}
 </template>
 
 <script>
 	export default (modifiers, props) => {
-		modifiers.r = {
-			baba: '23f'
-		};
-		setTimeout(()=> {
-			modifiers.r.baba = '43';
-		}, 1000)
 	}
 </script>`;
 

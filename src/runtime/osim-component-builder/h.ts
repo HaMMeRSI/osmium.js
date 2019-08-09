@@ -1,14 +1,13 @@
-import { ModifierAction, IOsimChilds } from './../runtime-interfaces';
-import { addModifierAction } from '../helpers/modifier-methods';
+import { ModifierAction, IOsimChilds, IModifierManager } from './../runtime-interfaces';
 import { matchDynamicGetterName } from '../consts/regexes';
 import * as deepmerge from 'deepmerge';
-import { IOsimNode, IModifierActions, IHastAttribute } from '../runtime-interfaces';
+import { IOsimNode, IHastAttribute } from '../runtime-interfaces';
 import { runtimeDeepmergeOptions } from '../helpers/deepmerge-options';
 import { resolveObjectKey, getAccessorFromString } from '../helpers/objectFunctions';
 
-export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: IOsimChilds = []): IOsimNode => {
-	const modifierActions: IModifierActions = {};
+export default (modifierManager: IModifierManager) => (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: IOsimChilds = []): IOsimNode => {
 	const dom = document.createElement(tagName);
+	const removers: (() => void)[] = [];
 
 	attrs.forEach(([name, value]: { [Symbol.iterator](); name: string; value: string }): void => {
 		const modifierName: RegExpMatchArray = value.match(matchDynamicGetterName);
@@ -33,7 +32,7 @@ export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: I
 				};
 			}
 
-			addModifierAction(modifierActions, modifierName[0].split('.')[0], action);
+			removers.push(modifierManager.addAction(modifierName[0], action));
 		} else {
 			dom.setAttribute(name, value);
 		}
@@ -42,7 +41,7 @@ export default (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: I
 	let onodeh: IOsimNode = {
 		dom,
 		builtins: [],
-		modifiersActions: modifierActions,
+		removers,
 		order: [],
 		requestedProps: {},
 	};

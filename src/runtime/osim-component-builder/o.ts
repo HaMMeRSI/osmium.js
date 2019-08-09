@@ -1,21 +1,11 @@
-import { IOsimNode, RegisterToProps, IOsmiumComponentModifiers } from '../runtime-interfaces';
-import { createModifiersManager } from '../helpers/modifier-manager';
+import { IOsimNode, RegisterToProps, IOsmiumComponentModifiers, IModifierManager } from '../runtime-interfaces';
 import { componentScopeDelimiter } from '../../common/consts';
-import { IModifierNamesByScopeObjectified } from '../../common/interfaces';
 
 type Funcs = {
 	[name: string]: (modifiers: IOsmiumComponentModifiers, registerToProps: RegisterToProps) => void;
 };
-
-export default (
-	osmiumApp: IOsimNode
-): ((target: HTMLElement, componentFuncs: Funcs, modifierNamesByScope: IModifierNamesByScopeObjectified) => Node) => (
-	target,
-	componentFuncs,
-	modifierNamesByScope
-): Node => {
-	const modifiersManager = createModifiersManager();
-
+type AppLauncher = (target: HTMLElement, componentFuncs: Funcs, modifiersManager: IModifierManager) => Node;
+export default (osmiumApp: IOsimNode): AppLauncher => (target, componentFuncs, modifiersManager): Node => {
 	const computeOsimNode = (osmiumNode: IOsimNode) => {
 		for (const { uid, componentName } of osmiumNode.order) {
 			const requestedProps = osmiumNode.requestedProps[uid];
@@ -38,39 +28,27 @@ export default (
 			};
 
 			const componentFunction = componentFuncs[componentName];
-			componentFunction(modifiersManager.modifiers.get(uid), rgisterPropsChange);
+			componentFunction(modifiersManager.modifiers[uid], rgisterPropsChange);
 		}
 
 		for (const builtin of osmiumNode.builtins) {
-			const evaluationFunction = () => {
-				const evaluatedBuiltinFunc = builtin.evaluationFunction(modifiersManager.modifiers);
-
-				if (evaluatedBuiltinFunc === null) {
-					new Set(
-						modifierNamesByScope[builtin.uid].map((modifier) => modifier.split(componentScopeDelimiter)[0])
-					).forEach((componentUid) => {
-						if (modifiersManager.modifiers.has(componentUid)) {
-							modifiersManager.removeComponent(componentUid);
-						}
-					});
-				} else {
-					modifiersManager.addModifiers(modifierNamesByScope[builtin.uid]);
-					const osimBuiltinNode = evaluatedBuiltinFunc(modifiersManager);
-					modifiersManager.addActions(osimBuiltinNode.modifiersActions);
-					computeOsimNode(osimBuiltinNode);
+			function evaluateBuiltin() {
+				const oNode: IOsimNode = builtin.evaluationFunction(modifiersManager, modifiersManager.modifiers);
+				if (oNode) {
+					computeOsimNode(oNode);
 				}
-			};
-			evaluationFunction();
+			}
+			evaluateBuiltin();
 
 			for (const requestedModifier of builtin.builtinData.usedModifiers) {
-				modifiersManager.addListener(requestedModifier, evaluationFunction);
+				modifiersManager.addListener(requestedModifier, evaluateBuiltin);
 			}
 		}
 	};
 
 	osmiumApp.order.splice(0, 0, { uid: 'root', componentName: 'root' });
-	modifiersManager.addModifiers(modifierNamesByScope.global);
-	modifiersManager.addActions(osmiumApp.modifiersActions);
+	// modifiersManager.addModifiers(modifierNamesByScope.global);
+	// modifiersManager.addActions(osmiumApp.modifiersActions);
 	computeOsimNode(osmiumApp);
 	target.appendChild(osmiumApp.dom);
 

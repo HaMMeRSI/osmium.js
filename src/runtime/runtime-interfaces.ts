@@ -31,8 +31,7 @@ export interface IModifierActions {
 
 export interface IModifierManager {
 	modifiers: Map<ComponentUid, any>;
-	addModifiers(modifierNames: string[]);
-	addActions(modifierActions: IModifierActions);
+	addAction(path: string, modifierActions: ModifierAction);
 	addListener(modifierName, func, getProps?);
 	removeComponent(compinentUid: ComponentUid);
 }
@@ -58,7 +57,7 @@ export interface IBuiltins {
 	uid: string;
 	type: string;
 	builtinData: IBuiltinData;
-	evaluationFunction: (modifiers: IOsmiumModifiers) => (modifierManager: IModifierManager) => IOsimNode;
+	evaluationFunction: (modifierManager: IModifierManager, modifiers: IOsmiumModifiers) => IOsimNode;
 }
 
 export type IOsimChilds = IOsimNode[];
@@ -70,7 +69,7 @@ export interface IOsimOrder {
 
 export interface IOsimNode {
 	dom: Node;
-	modifiersActions: IModifierActions;
+	removers: (() => void)[];
 	requestedProps: IRequestedProps;
 	builtins: IBuiltins[];
 	order: IOsimOrder[];
