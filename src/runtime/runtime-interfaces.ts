@@ -47,17 +47,20 @@ export interface IComponentProps {
 export interface IRequestedProps {
 	[componentUid: string]: IComponentProps[];
 }
-
 export interface IBuiltinData {
 	usedModifiers: string[];
 	loop?: string;
+}
+
+export interface IBuiltinDomResult {
+	nodes: ChildNode[];
 }
 
 export interface IBuiltins {
 	uid: string;
 	type: string;
 	builtinData: IBuiltinData;
-	evaluationFunction: (modifierManager: IModifierManager, modifiers: IOsmiumModifiers) => IOsimNode;
+	evaluationFunction: (modifierManager: IModifierManager, modifiers: IOsmiumModifiers) => IOsimNodeData;
 }
 
 export type IOsimChilds = IOsimNode[];
@@ -67,16 +70,26 @@ export interface IOsimOrder {
 	componentName: string;
 }
 
-export interface IOsimNode {
+export type OsimNodeLauncher = (parent: IOsimNode) => () => void;
+
+export interface IOsimNodeData {
 	dom: Node;
 	removers: (() => void)[];
 	requestedProps: IRequestedProps;
-	builtins: IBuiltins[];
 	order: IOsimOrder[];
 }
 
-export interface IHastAttribute {
-	[Symbol.iterator]();
-	name: string;
-	value: string;
+export type ComponentFuncs = {
+	[name: string]: (modifiers: IOsmiumComponentModifiers, registerToProps: RegisterToProps) => void;
+};
+
+export interface IOsimNode {
+	oNode: IOsimNodeData;
+	addChild: (childONode: IOsimNode) => void;
+	addRemover: (remover: () => void) => void;
+	remove: () => void;
+	removeChilds: () => void;
+	compute: (componentFuncs: ComponentFuncs, modifiersManager: IModifierManager, nodeData?: any) => void;
 }
+
+export type EvaluationFunction = (modifiers: IOsmiumModifiers) => IOsimChilds;

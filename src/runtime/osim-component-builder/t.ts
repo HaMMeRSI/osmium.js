@@ -1,11 +1,14 @@
 import { matchDynamicGetter, matchDynamicGetterName } from '../consts/regexes';
-import { IOsimNode, IModifierManager } from '../runtime-interfaces';
+import { IModifierManager, IOsimNode } from '../runtime-interfaces';
 import { resolveObjectKey, getAccessorFromString } from '../helpers/objectFunctions';
+import { OsimNode } from '../osim-node/OsimNode';
 
 export default (modifierManager: IModifierManager) => (text: string): IOsimNode => {
 	const dom: Text = document.createTextNode(text);
+	const tONode = new OsimNode(dom);
+
 	const textModifiers = text.match(matchDynamicGetter);
-	const removers: (() => void)[] = [];
+	tONode.addRemover(() => dom.remove());
 
 	if (textModifiers) {
 		dom.nodeValue = '';
@@ -26,10 +29,10 @@ export default (modifierManager: IModifierManager) => (text: string): IOsimNode 
 				};
 
 				dom.data = brokenText.join('');
-				removers.push(modifierManager.addAction(modifierName[0], action));
+				tONode.addRemover(modifierManager.addAction(modifierName[0], action));
 			}
 		}
 	}
 
-	return { dom, removers, requestedProps: {}, order: [], builtins: [] };
+	return tONode;
 };

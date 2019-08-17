@@ -1,19 +1,13 @@
-import * as deepmerge from 'deepmerge';
-import { IOsimNode } from '../runtime-interfaces';
-import { runtimeDeepmergeOptions } from '../helpers/deepmerge-options';
+import { IOsimChilds, IOsimNode } from '../runtime-interfaces';
+import { OsimNode } from '../osim-node/OsimNode';
 
-export default (childs = []): IOsimNode => {
-	let onodeFragment: IOsimNode = {
-		dom: document.createDocumentFragment(),
-		builtins: [],
-		removers: [],
-		order: [],
-		requestedProps: {},
-	};
+export default (childs: IOsimChilds = []): IOsimNode => {
+	const dom = document.createDocumentFragment();
+	const fONode = new OsimNode(dom);
 
 	childs.forEach((child) => {
-		onodeFragment = deepmerge(onodeFragment, child, runtimeDeepmergeOptions);
+		fONode.addChild(child);
 	});
 
-	return onodeFragment;
+	return fONode;
 };

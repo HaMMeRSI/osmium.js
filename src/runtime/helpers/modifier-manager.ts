@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ComponentUid, IModifierManager, ModifierAction } from '../runtime-interfaces';
-import { componentScopeDelimiter } from '../../common/consts';
-import { resolveObjectKey } from './objectFunctions';
 interface ITeraidKeys {
 	[key: string]: ITeraid;
 }
@@ -29,11 +27,14 @@ function callAllEffects(model, effects) {
 		}
 	});
 }
+
 function initAllEffects(model, effects) {
-	Object.entries(model).forEach(([key, value]: any) => {
-		effects[key] = createBaseTeraid();
-		initAllEffects(model[key], value);
-	});
+	if (typeof model === 'object') {
+		Object.entries(model).forEach(([key, value]: any) => {
+			effects[key] = createBaseTeraid();
+			initAllEffects(model[key], value);
+		});
+	}
 }
 
 function createProxer(model, effects) {
@@ -67,8 +68,8 @@ function createProxer(model, effects) {
 
 export default (): IModifierManager => {
 	// const modifierCollection: IOsmiumModifiers = new Map<string, IModifierInstance>();
-	const modelCollection: Map<ComponentUid, any> = new Map<ComponentUid, any>();
-	const effectsCollection: Map<ComponentUid, any> = new Map<ComponentUid, any>();
+	const modelCollection: Map<ComponentUid, Record<string, any>> = new Map<ComponentUid, Record<string, any>>();
+	const effectsCollection: Map<ComponentUid, ITeraid> = new Map<ComponentUid, ITeraid>();
 
 	return {
 		modifiers: new Proxy(Object.create(null), {
@@ -86,38 +87,49 @@ export default (): IModifierManager => {
 
 			let currModel = modelCollection.get(componentUid);
 			const properties = path.replace(/\[(\w+)\]/g, '.$1').split('.');
-			const obj = properties.reduce((acc: ITeraid, curr: string) => {
-				if (!(curr in acc)) {
-					acc[curr] = createBaseTeraid();
+			const obj = properties.reduce((currEffect: ITeraid, key: string) => {
+				if (!(key in currEffect)) {
+					currEffect[key] = createBaseTeraid();
 				}
 
-				if (currModel && curr in currModel) {
-					currModel = currModel[curr];
-				} else {
-					currModel = null;
+				if (currModel) {
+					currModel = currModel[key];
 				}
 
-				return acc[curr];
-			}, effectsCollection.get(componentUid)) as ITeraid;
+				return currEffect[key];
+			}, effectsCollection.get(componentUid));
 
 			if (currModel) {
 				modifierAction(currModel);
 			}
+
 			obj.$actions.push(modifierAction);
 			return () => obj.$actions.splice(obj.$actions.indexOf(modifierAction), 1);
 		},
 		addListener(fullModifierName, func, getProps = () => null) {
 			const [componentUid, path] = fullModifierName.split('_');
+			if (!effectsCollection.has(componentUid)) {
+				effectsCollection.set(componentUid, Object.create(null));
+				modelCollection.set(componentUid, Object.create(null));
+			}
+
 			const properties = path.replace(/\[(\w+)\]/g, '.$1').split('.');
-			const obj = properties.reduce((acc: ITeraid, curr: string) => {
-				if (!(curr in acc)) {
-					acc[curr] = createBaseTeraid();
+			let currModel = modelCollection.get(componentUid);
+			const obj = properties.reduce((currEffect: ITeraid, key: string) => {
+				if (!(key in currEffect)) {
+					currEffect[key] = createBaseTeraid();
 				}
 
-				return acc[curr];
+				if (currModel) {
+					currModel = currModel[key];
+				}
+				return currEffect[key];
 			}, effectsCollection.get(componentUid)) as ITeraid;
 
 			const listener = () => func(getProps());
+			if (currModel) {
+				listener();
+			}
 			obj.$listeners.push(listener);
 			return () => obj.$listeners.splice(obj.$listeners.indexOf(listener), 1);
 		},

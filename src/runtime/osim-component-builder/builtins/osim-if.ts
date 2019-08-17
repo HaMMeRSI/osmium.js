@@ -1,36 +1,20 @@
-import { IOsmiumModifiers, IOsimNode, IModifierManager } from '../../runtime-interfaces';
+import { IOsimNodeData, IModifierManager, EvaluationFunction } from '../../runtime-interfaces';
 
-export const getConditionBuiltinEvaluationFunction = (uid: string, builtinCondition: (modifiers) => IOsimNode, domPlaceHolder: Comment) => {
-	let childNodes: ChildNode[] = [];
-	let remove = null;
-
-	return (modifierManager: IModifierManager, passedModifiers: IOsmiumModifiers): IOsimNode => {
-		const newONode = builtinCondition(passedModifiers);
-
-		if (newONode === null) {
-			if (childNodes.length > 0) {
-				childNodes[0].replaceWith(domPlaceHolder);
-
-				for (let i = 1; i < childNodes.length; i++) {
-					childNodes[i].parentNode.removeChild(childNodes[i]);
-				}
-
-				remove();
-				childNodes = [];
-			}
-
-			return null;
-		}
-
-		remove = () => {
-			newONode.removers.forEach((remover) => remover());
-			modifierManager.removeComponent(uid);
-			remove = null;
-		};
-
-		childNodes = Array.from(newONode.dom.childNodes);
-		domPlaceHolder.replaceWith(newONode.dom);
-
-		return newONode;
-	};
+export const getConditionBuiltinEvaluationFunction = (uid: string, builtinCondition: EvaluationFunction, domPlaceHolder: Node[], parent) => {
+	// let remove = null;
+	// return (modifiersManager: IModifierManager): IOsimNodeData => {
+	// const newONodeLauncher = builtinCondition(modifiersManager.modifiers);
+	// if (newONodeLauncher === null) {
+	// 	remove();
+	// 	return null;
+	// }
+	// const comment = domPlaceHolder[0];
+	// const newONode = newONodeLauncher(domPlaceHolder[0] as Comment, true);
+	// remove = () => {
+	// 	newONode.removers.forEach((remover) => remover());
+	// 	modifiersManager.removeComponent(uid);
+	// 	remove = null;
+	// };
+	// return newONode;
+	// };
 };

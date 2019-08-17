@@ -1,33 +1,29 @@
-import { IBuiltinData } from './../runtime-interfaces';
-import { IOsimNode, IBuiltins } from '../runtime-interfaces';
-import { getConditionBuiltinEvaluationFunction } from './builtins/osim-if';
-import { getLoopBuiltinEvaluationFunction } from './builtins/loop-builtin';
+import { IBuiltinData, EvaluationFunction, IOsimNode, IModifierManager, ComponentFuncs } from '../runtime-interfaces';
+import { OsimBuiltinNode } from '../osim-node/OsimBuiltinNode';
 
-export default (nodeName: string, builtinData: IBuiltinData, uid: string, builtinFunction: (modifiers) => IOsimNode): IOsimNode => {
-	const domPlaceHolder = document.createComment('b-ph');
+export default (componentFuncs: ComponentFuncs, modifiersManager: IModifierManager) => (
+	nodeName: string,
+	builtinData: IBuiltinData,
+	uid: string,
+	builtinFunction: EvaluationFunction
+): IOsimNode => {
+	const bONode = new OsimBuiltinNode(uid, builtinData.usedModifiers, builtinFunction);
 
-	const builtins: IBuiltins[] = [];
-	if (nodeName === 'osim-if') {
-		builtins.push({
-			uid,
-			type: 'condition',
-			builtinData,
-			evaluationFunction: getConditionBuiltinEvaluationFunction(uid, builtinFunction, domPlaceHolder),
-		});
-	} else if (nodeName === 'osim-for') {
-		builtins.push({
-			uid,
-			type: 'loop',
-			builtinData,
-			evaluationFunction: getLoopBuiltinEvaluationFunction(uid, builtinFunction, builtinData.loop.split(' ')[0], domPlaceHolder),
-		});
-	}
+	// const calculateBuiltin = () => {
+	// 	const evaluatedONodes = builtinFunction(modifiersManager.modifiers);
 
-	return {
-		dom: domPlaceHolder,
-		removers: [],
-		requestedProps: {},
-		builtins,
-		order: [],
-	};
+	// 	if (evaluatedONodes === null) {
+	// 		bONode.removeChilds();
+	// 		modifiersManager.removeComponent(uid);
+	// 	} else {
+	// 		evaluatedONodes.forEach((child) => bONode.addChild(child));
+	// 		bONode.compute(componentFuncs, modifiersManager);
+	// 	}
+	// };
+
+	// for (const requestedModifier of builtinData.usedModifiers) {
+	// 	bONode.addRemover(modifiersManager.addListener(requestedModifier, calculateBuiltin));
+	// }
+
+	return bONode;
 };

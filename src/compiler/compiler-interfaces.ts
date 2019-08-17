@@ -1,3 +1,5 @@
+import { IHastAttribute } from '../common/interfaces';
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export type OsimDocuments = { [name: string]: IOsimDocument };
 
@@ -13,11 +15,6 @@ export interface IOsimDocument {
 	components: string[];
 	script: string;
 	style: string;
-}
-
-export interface IHastAttribute {
-	name: string;
-	value: string;
 }
 
 export interface IOsimPropModifier {

@@ -1,9 +1,10 @@
 import { OsimDocuments, ICollapseResult, IHast, IProps, IModifierScopes } from '../compiler-interfaces';
-import { IOsimDocument, IHastAttribute, IHastObjectAttributes } from '../compiler-interfaces';
+import { IOsimDocument, IHastObjectAttributes } from '../compiler-interfaces';
 import * as parse5 from 'parse5';
 import * as uniqid from 'uniqid';
 import { matchDynamicGetterName, matchDynamicGetter, getSpecificMatchDynamicGetter } from '../../runtime/consts/regexes';
 import { componentScopeDelimiter } from '../../common/consts';
+import { IHastAttribute } from '../../common/interfaces';
 
 function resolveModifiers(hastNode: IHast, parentProps: IProps, componentScope: string): Set<string> {
 	const componentModifiers: Set<string> = new Set();

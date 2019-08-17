@@ -1,10 +1,10 @@
-import { IOsimNode, IModifierManager, IOsmiumModifiers } from '../../runtime-interfaces';
+import { IOsimNodeData, IModifierManager, IOsmiumModifiers, EvaluationFunction } from '../../runtime-interfaces';
 import f from '../f';
 interface ILoopItem {
-	onode: IOsimNode;
+	onode: IOsimNodeData;
 	i: any;
 }
-export const getLoopBuiltinEvaluationFunction = (uid: string, childEvaluationFunction: (modifiers) => IOsimNode, loopElement: string, domPlaceHolder: Comment) => {
+export const getLoopBuiltinEvaluationFunction = (uid: string, childEvaluationFunction: EvaluationFunction, loopElement: string, domPlaceHolder: Comment) => {
 	// let childNodes: ChildNode[] = [];
 	return (modifierManager: IModifierManager, passedModifiers: IOsmiumModifiers) => {
 		const evaluatedLoopItems = childEvaluationFunction(passedModifiers);

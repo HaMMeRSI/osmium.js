@@ -1,6 +1,7 @@
 import { matchDynamicGetterName, matchDynamicGetter } from '../../runtime/consts/regexes';
-import { IHast, IHastAttribute } from '../compiler-interfaces';
+import { IHast } from '../compiler-interfaces';
 import { componentScopeDelimiter } from '../../common/consts';
+import { IHastAttribute } from '../../common/interfaces';
 
 function parseAttrs(attrs = []): string {
 	return JSON.stringify(attrs.map(({ name, value }): string[] => [name, value]));
@@ -33,17 +34,17 @@ function componentBuilder(node: IHast): string {
 				const splitted = modifier.match(matchDynamicGetterName)[0].split(componentScopeDelimiter);
 				return acc.replace(modifier, `modifiers['${splitted[0]}'].${splitted[1]}`);
 			}, attrs[0].value);
-			const evaluationFunc = `(modifiers)=>(${newIf})?f([${childrens.join(',')}]):null`;
+			const evaluationFunc = `(modifiers)=>(${newIf})?[${childrens.join(',')}]:null`;
 			return `b(${nodeName},{usedModifiers:[${usedModifiers}]},'${osimUid.value}',${evaluationFunc})`;
 		} else if (attrs[0].name === 'for') {
 			const nodeName = `'${node.nodeName}-${attrs[0].name}'`;
 			const [componentUid, loopObject] = dynamicGettersForCondition[0].match(matchDynamicGetterName)[0].split(componentScopeDelimiter);
 			const childrensString = childrens.join(',');
-			const evaluationFunc = `(modifiers)=>()=>modifiers['${componentUid}'].${loopObject}.map(i=>({i,onode:f([${childrensString}])}))`;
+			const evaluationFunc = `(modifiers)=>()=>modifiers['${componentUid}'].${loopObject}.map(i=>({i,onode:[${childrensString}]}))`;
 			return `b(${nodeName},{usedModifiers:[${usedModifiers}],loop:'${attrs[0].value}'},'${osimUid.value}',${evaluationFunc})`;
 		}
 
-		return `b(${node.nodeName},[${dynamicGettersForCondition.join(',')}],()=>f([${childrens.join(',')}]))`;
+		return `b(${node.nodeName},[${dynamicGettersForCondition.join(',')}],()=>[${childrens.join(',')}])`;
 	} else if (osimUid) {
 		return `c('${node.nodeName}',${parseAttrs(node.attrs)},[${childrens.join(',')}])`;
 	} else if (node.nodeName === '#document-fragment') {

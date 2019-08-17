@@ -1,15 +1,14 @@
-import { ModifierAction, IOsimChilds, IModifierManager } from './../runtime-interfaces';
 import { matchDynamicGetterName } from '../consts/regexes';
-import * as deepmerge from 'deepmerge';
-import { IOsimNode, IHastAttribute } from '../runtime-interfaces';
-import { runtimeDeepmergeOptions } from '../helpers/deepmerge-options';
 import { resolveObjectKey, getAccessorFromString } from '../helpers/objectFunctions';
+import { IModifierManager, IOsimChilds, IOsimNode, ModifierAction } from '../runtime-interfaces';
+import { OsimNode } from '../osim-node/OsimNode';
 
-export default (modifierManager: IModifierManager) => (tagName: string = 'div', attrs: IHastAttribute[] = [], childs: IOsimChilds = []): IOsimNode => {
+export default (modifierManager: IModifierManager) => (tagName: string = 'div', attrs: string[] = [], childs: IOsimChilds = []): IOsimNode => {
 	const dom = document.createElement(tagName);
-	const removers: (() => void)[] = [];
+	const hONode = new OsimNode(dom);
+	hONode.addRemover(() => dom.remove());
 
-	attrs.forEach(([name, value]: { [Symbol.iterator](); name: string; value: string }): void => {
+	attrs.forEach(([name, value]): void => {
 		const modifierName: RegExpMatchArray = value.match(matchDynamicGetterName);
 
 		if (modifierName) {
@@ -32,22 +31,15 @@ export default (modifierManager: IModifierManager) => (tagName: string = 'div', 
 				};
 			}
 
-			removers.push(modifierManager.addAction(modifierName[0], action));
+			hONode.addRemover(modifierManager.addAction(modifierName[0], action));
 		} else {
 			dom.setAttribute(name, value);
 		}
 	});
 
-	let onodeh: IOsimNode = {
-		dom,
-		builtins: [],
-		removers,
-		order: [],
-		requestedProps: {},
-	};
-
 	childs.forEach((child) => {
-		onodeh = deepmerge(onodeh, child as IOsimNode, runtimeDeepmergeOptions);
+		hONode.addChild(child);
 	});
-	return onodeh;
+
+	return hONode;
 };
