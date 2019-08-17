@@ -30,9 +30,9 @@ function callAllEffects(model, effects) {
 
 function initAllEffects(model, effects) {
 	if (typeof model === 'object') {
-		Object.entries(model).forEach(([key, value]: any) => {
+		Object.entries(model).forEach(([key]: any) => {
 			effects[key] = createBaseTeraid();
-			initAllEffects(model[key], value);
+			initAllEffects(model[key], effects[key]);
 		});
 	}
 }
@@ -42,7 +42,9 @@ function createProxer(model, effects) {
 		get(target, prop: any) {
 			if (!(prop in target)) {
 				target[prop] = Object.create(null);
-				effects[prop] = createBaseTeraid();
+				if (!(prop in effects)) {
+					effects[prop] = createBaseTeraid();
+				}
 			}
 
 			if (typeof target[prop] === 'object') {
@@ -74,7 +76,10 @@ export default (): IModifierManager => {
 	return {
 		modifiers: new Proxy(Object.create(null), {
 			get(_, prop: any) {
-				return createProxer(modelCollection.get(prop), effectsCollection.get(prop));
+				if (modelCollection.has(prop)) {
+					return createProxer(modelCollection.get(prop), effectsCollection.get(prop));
+				}
+				return null;
 			},
 			set: () => false,
 		}),

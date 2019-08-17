@@ -32,7 +32,7 @@ export class BaseOsimNode implements IOsimNode {
 		this.childrens.forEach((child) => child.remove());
 	}
 
-	public compute(componentFuncs: ComponentFuncs, modifiersManager: IModifierManager, nodeData?: any) {
+	public compute(componentFuncs: ComponentFuncs, modifiersManager: IModifierManager) {
 		this.childrens.forEach((childONode: IOsimNode) => {
 			childONode.compute(componentFuncs, modifiersManager);
 		});

@@ -48,7 +48,7 @@ function componentBuilder(node: IHast): string {
 	} else if (osimUid) {
 		return `c('${node.nodeName}',${parseAttrs(node.attrs)},[${childrens.join(',')}])`;
 	} else if (node.nodeName === '#document-fragment') {
-		return `f([${childrens.join(',')}])`;
+		return `[${childrens.join(',')}]`;
 	}
 
 	return `h('${node.nodeName}',${parseAttrs(node.attrs)},[${childrens.join(',')}])`;

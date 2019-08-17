@@ -22,14 +22,18 @@ import { emitJsFiles } from './src/compiler/js/emit-js';
  */
 const rootOsimComponent = `
 <template>
+	import osim7 from './components/osim7-simpleModifier.js';
+	import osim5 from './components/osim5-deepObject.js';
 	<div>
 		<button @click="{{toggleMainIf}}">toggle main if</button>
 		<button @click="{{toggleSubIf}}">toggle sub if</button>
 	</div>
+	if:<br/><br/>
 	<osim if="{{showAge}} === true">
-		text goes here<br/><br/>
+		<osim5 person="{{persona}}" subaba="{{data.sub.aba}}"></osim5><br/>
+		text goes here<br/>
 		<osim if="{{showData}} === true">
-			data here :)
+			<osim7></osim7>
 		</osim>
 	</osim>
 </template>
@@ -44,6 +48,14 @@ const rootOsimComponent = `
 		};
 		modifiers.showAge = true;
 		modifiers.showData = true;
+		modifiers.persona = {
+			name: {
+				first: 'sagi',
+				last: 'hammer',
+			},
+			age: 23,
+		};
+		modifiers.data.sub.aba = 'sababa';
 	}
 </script>`;
 const rootComponentSrcPath = path.resolve(process.cwd(), './src/root.js');

@@ -1,5 +1,5 @@
 import { matchDynamicGetterName } from '../consts/regexes';
-import { RegisterToProps } from '../runtime-interfaces';
+import { RegisterToProps, IOsimChilds, IOsimNode } from '../runtime-interfaces';
 import { componentScopeDelimiter } from '../../common/consts';
 import { BaseOsimNode } from './BaseOsimNode';
 
@@ -8,7 +8,7 @@ export class OsimComponentNode extends BaseOsimNode {
 	public componentName;
 	public props;
 
-	public constructor(componentName, props) {
+	public constructor(componentName, props, childs: IOsimChilds) {
 		super(document.createDocumentFragment());
 		const [, uid] = props.find(([name]): boolean => name.startsWith('osim'));
 		this.uid = uid;
@@ -33,11 +33,13 @@ export class OsimComponentNode extends BaseOsimNode {
 			}
 			return requestedProps;
 		}, {});
+
+		childs.forEach((child) => {
+			this.addChild(child);
+		});
 	}
 
 	public compute(componentFuncs, modifiersManager) {
-		super.compute(componentFuncs, modifiersManager);
-
 		for (const { uid, componentName } of this.oNode.order) {
 			const requestedProps = this.oNode.requestedProps[uid];
 			const rgisterPropsChange: RegisterToProps = (f): void => {
@@ -58,6 +60,10 @@ export class OsimComponentNode extends BaseOsimNode {
 			const componentFunction = componentFuncs[componentName];
 			componentFunction(modifiersManager.modifiers[uid], rgisterPropsChange);
 		}
+
+		this.childrens.forEach((childONode: IOsimNode) => {
+			childONode.compute(componentFuncs, modifiersManager);
+		});
 	}
 
 	public addChild(childONode) {

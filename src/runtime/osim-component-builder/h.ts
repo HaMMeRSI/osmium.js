@@ -5,8 +5,7 @@ import { OsimNode } from '../osim-node/OsimNode';
 
 export default (modifierManager: IModifierManager) => (tagName: string = 'div', attrs: string[] = [], childs: IOsimChilds = []): IOsimNode => {
 	const dom = document.createElement(tagName);
-	const hONode = new OsimNode(dom);
-	hONode.addRemover(() => dom.remove());
+	const hONode = new OsimNode(dom, childs);
 
 	attrs.forEach(([name, value]): void => {
 		const modifierName: RegExpMatchArray = value.match(matchDynamicGetterName);
@@ -35,10 +34,6 @@ export default (modifierManager: IModifierManager) => (tagName: string = 'div', 
 		} else {
 			dom.setAttribute(name, value);
 		}
-	});
-
-	childs.forEach((child) => {
-		hONode.addChild(child);
 	});
 
 	return hONode;

@@ -7,23 +7,17 @@ export default (componentFuncs: ComponentFuncs, modifiersManager: IModifierManag
 	uid: string,
 	builtinFunction: EvaluationFunction
 ): IOsimNode => {
-	const bONode = new OsimBuiltinNode(uid, builtinData.usedModifiers, builtinFunction);
+	return new OsimBuiltinNode(uid, builtinData.usedModifiers, (oNode) => {
+		const evaluatedONodes = builtinFunction(modifiersManager.modifiers);
 
-	// const calculateBuiltin = () => {
-	// 	const evaluatedONodes = builtinFunction(modifiersManager.modifiers);
-
-	// 	if (evaluatedONodes === null) {
-	// 		bONode.removeChilds();
-	// 		modifiersManager.removeComponent(uid);
-	// 	} else {
-	// 		evaluatedONodes.forEach((child) => bONode.addChild(child));
-	// 		bONode.compute(componentFuncs, modifiersManager);
-	// 	}
-	// };
-
-	// for (const requestedModifier of builtinData.usedModifiers) {
-	// 	bONode.addRemover(modifiersManager.addListener(requestedModifier, calculateBuiltin));
-	// }
-
-	return bONode;
+		if (evaluatedONodes === null) {
+			oNode.removeChilds();
+			modifiersManager.removeComponent(oNode.uid);
+		} else {
+			evaluatedONodes.forEach((child) => {
+				oNode.addChild(child);
+				child.compute(componentFuncs, modifiersManager);
+			});
+		}
+	});
 };

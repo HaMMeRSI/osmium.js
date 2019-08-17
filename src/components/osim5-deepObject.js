@@ -1,6 +1,6 @@
 module.exports = `
 <template>
-	abada: {{person.name.first}}<br/>
+	first name: {{person.name.first}}<br/>
 	subaba: {{subaba}}
 </template>
 

@@ -89,7 +89,7 @@ export interface IOsimNode {
 	addRemover: (remover: () => void) => void;
 	remove: () => void;
 	removeChilds: () => void;
-	compute: (componentFuncs: ComponentFuncs, modifiersManager: IModifierManager, nodeData?: any) => void;
+	compute: (componentFuncs: ComponentFuncs, modifiersManager: IModifierManager) => void;
 }
 
 export type EvaluationFunction = (modifiers: IOsmiumModifiers) => IOsimChilds;

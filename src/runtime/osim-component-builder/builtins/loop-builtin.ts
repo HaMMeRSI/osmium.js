@@ -1,5 +1,4 @@
 import { IOsimNodeData, IModifierManager, IOsmiumModifiers, EvaluationFunction } from '../../runtime-interfaces';
-import f from '../f';
 interface ILoopItem {
 	onode: IOsimNodeData;
 	i: any;

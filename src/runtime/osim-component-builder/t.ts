@@ -8,7 +8,6 @@ export default (modifierManager: IModifierManager) => (text: string): IOsimNode 
 	const tONode = new OsimNode(dom);
 
 	const textModifiers = text.match(matchDynamicGetter);
-	tONode.addRemover(() => dom.remove());
 
 	if (textModifiers) {
 		dom.nodeValue = '';

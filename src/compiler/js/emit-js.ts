@@ -13,13 +13,12 @@ function buildOsimEntry(osimComponents: OsimDocuments, output: string): void {
 		// TODO: if no (../) then no (./) as well, check it?..
 		importStrings.push(`import ${name} from '${path.relative(output, value.path).replace(/\\/g, '/')}';`);
 	}
-	importStrings.push("import mm from 'osmium/helpers/modifier-manager';");
-	importStrings.push("import f from 'osmium/osim-component-builder/f';");
+	importStrings.push("import o from 'osmium/osim-component-builder/o';");
 	importStrings.push("import c from 'osmium/osim-component-builder/c';");
 	importStrings.push("import hh from 'osmium/osim-component-builder/h';");
 	importStrings.push("import tt from 'osmium/osim-component-builder/t';");
-	importStrings.push("import o from 'osmium/osim-component-builder/o';");
 	importStrings.push("import bb from 'osmium/osim-component-builder/b';");
+	importStrings.push("import mm from 'osmium/helpers/modifier-manager';");
 
 	const entryFile = `${importStrings.join('\n')}
 
