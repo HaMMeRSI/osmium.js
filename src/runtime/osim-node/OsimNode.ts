@@ -1,5 +1,5 @@
 import { BaseOsimNode } from './BaseOsimNode';
-import { IOsimChilds } from '../runtime-interfaces';
+import { IOsimChilds, IOsimNode } from '../runtime-interfaces';
 
 export class OsimNode extends BaseOsimNode {
 	public constructor(dom: Element | Text, childs?: IOsimChilds) {
@@ -15,8 +15,8 @@ export class OsimNode extends BaseOsimNode {
 		}
 	}
 
-	public addChild(childONode) {
+	public addChild(childONode: IOsimNode) {
 		super.addChild(childONode);
-		this.oNode.dom.appendChild(childONode.oNode.dom);
+		this.dom.appendChild(childONode.dom);
 	}
 }

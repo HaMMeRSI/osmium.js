@@ -1,12 +1,12 @@
-import { OsimDocuments, ICollapseResult } from '../compiler-interfaces';
+import { OsimDocuments, IHast } from '../compiler-interfaces';
 import * as fs from 'fs';
 import * as path from 'path';
 import { collapseOsimDocument } from '../template/collapse-template';
 import buildComponent from '../template/build-component';
 
 function buildOsimEntry(osimComponents: OsimDocuments, output: string): void {
-	const collapsedHast: ICollapseResult = collapseOsimDocument(osimComponents);
-	const componentString = buildComponent(collapsedHast.hast);
+	const collapsedHast: IHast = collapseOsimDocument(osimComponents);
+	const componentString = buildComponent(collapsedHast);
 
 	const importStrings = [];
 	for (const [name, value] of Object.entries(osimComponents)) {

@@ -1,9 +1,10 @@
 module.exports = `
 <template>
-	<div class='osim3' id='osim33'>
+	<pre>
+		miniday: {{mimi}}
 		name: {{name}}
 		day: {{day}}
-	</div>
+	</pre>
 </template>
 
 <script>

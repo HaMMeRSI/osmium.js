@@ -1,8 +1,4 @@
-import { IOsimNodeData, IModifierManager, IOsmiumModifiers, EvaluationFunction } from '../../runtime-interfaces';
-interface ILoopItem {
-	onode: IOsimNodeData;
-	i: any;
-}
+import { IModifierManager, IOsmiumModifiers, EvaluationFunction } from '../../runtime-interfaces';
 export const getLoopBuiltinEvaluationFunction = (uid: string, childEvaluationFunction: EvaluationFunction, loopElement: string, domPlaceHolder: Comment) => {
 	// let childNodes: ChildNode[] = [];
 	return (modifierManager: IModifierManager, passedModifiers: IOsmiumModifiers) => {

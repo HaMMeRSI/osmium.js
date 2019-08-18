@@ -13,6 +13,7 @@ export default (modifierManager: IModifierManager) => (text: string): IOsimNode 
 		dom.nodeValue = '';
 		const splitedText = text.split(matchDynamicGetter);
 		const brokenText: string[] = textModifiers.flatMap((modifierName, i): string[] => [splitedText[i], modifierName]);
+		brokenText.push(splitedText[splitedText.length - 1]);
 
 		for (let i = 0; i < brokenText.length; i++) {
 			const modifierName = brokenText[i].match(matchDynamicGetterName);

@@ -1,4 +1,4 @@
-import { IOsimNodeData, IModifierManager, EvaluationFunction } from '../../runtime-interfaces';
+import { EvaluationFunction } from '../../runtime-interfaces';
 
 export const getConditionBuiltinEvaluationFunction = (uid: string, builtinCondition: EvaluationFunction, domPlaceHolder: Node[], parent) => {
 	// let remove = null;

@@ -76,10 +76,11 @@ export default (): IModifierManager => {
 	return {
 		modifiers: new Proxy(Object.create(null), {
 			get(_, prop: any) {
-				if (modelCollection.has(prop)) {
-					return createProxer(modelCollection.get(prop), effectsCollection.get(prop));
+				if (!modelCollection.has(prop)) {
+					effectsCollection.set(prop, Object.create(null));
+					modelCollection.set(prop, Object.create(null));
 				}
-				return null;
+				return createProxer(modelCollection.get(prop), effectsCollection.get(prop));
 			},
 			set: () => false,
 		}),

@@ -1,24 +1,23 @@
+import { ComponentFuncs } from './../runtime-interfaces';
 import { matchDynamicGetterName } from '../consts/regexes';
-import { RegisterToProps, IOsimChilds, IOsimNode } from '../runtime-interfaces';
+import { RegisterToProps, IOsimChilds, IOsimNode, IModifierManager, IRequestedProps } from '../runtime-interfaces';
 import { componentScopeDelimiter } from '../../common/consts';
 import { BaseOsimNode } from './BaseOsimNode';
+import { OsimNodeProps } from '../../common/interfaces';
 
 export class OsimComponentNode extends BaseOsimNode {
-	public uid;
-	public componentName;
-	public props;
+	public uid: string;
+	public componentName: string;
+	public props: OsimNodeProps;
+	public requestedProps: IRequestedProps;
 
-	public constructor(componentName, props, childs: IOsimChilds) {
+	public constructor(componentName: string, props: OsimNodeProps, childs: IOsimChilds) {
 		super(document.createDocumentFragment());
 		const [, uid] = props.find(([name]): boolean => name.startsWith('osim'));
 		this.uid = uid;
 		this.componentName = componentName;
 		this.props = props;
-		this.oNode.order.push({
-			componentName,
-			uid,
-		});
-		this.oNode.requestedProps = props.reduce((requestedProps, [name, value]) => {
+		this.requestedProps = props.reduce((requestedProps, [name, value]) => {
 			const dynamicGetter = value.match(matchDynamicGetterName);
 			if (dynamicGetter) {
 				const requestedProp = {
@@ -39,35 +38,33 @@ export class OsimComponentNode extends BaseOsimNode {
 		});
 	}
 
-	public compute(componentFuncs, modifiersManager) {
-		for (const { uid, componentName } of this.oNode.order) {
-			const requestedProps = this.oNode.requestedProps[uid];
-			const rgisterPropsChange: RegisterToProps = (f): void => {
-				const getProps = () => {
-					const props = {};
-					for (const { attr, modifier } of Object.values(requestedProps)) {
-						const [modiferComponentUid, modifierName] = modifier.split(componentScopeDelimiter);
-						props[attr] = modifiersManager.modifiers.get(modiferComponentUid)[modifierName];
-					}
-					return props;
-				};
-				for (const { modifier } of Object.values(requestedProps)) {
-					modifiersManager.addListener(modifier, f, getProps);
+	public compute(componentFuncs: ComponentFuncs, modifiersManager: IModifierManager) {
+		const requestedProps = this.requestedProps[this.uid];
+		const rgisterPropsChange: RegisterToProps = (f): void => {
+			const getProps = () => {
+				const props = {};
+				for (const { attr, modifier } of Object.values(requestedProps)) {
+					const [modiferComponentUid, modifierName] = modifier.split(componentScopeDelimiter);
+					props[attr] = modifiersManager.modifiers[modiferComponentUid][modifierName];
 				}
-				f(getProps());
+				return props;
 			};
+			for (const { modifier } of Object.values(requestedProps)) {
+				modifiersManager.addListener(modifier, f, getProps);
+			}
+			f(getProps());
+		};
 
-			const componentFunction = componentFuncs[componentName];
-			componentFunction(modifiersManager.modifiers[uid], rgisterPropsChange);
-		}
+		const componentFunction = componentFuncs[this.componentName];
+		componentFunction(modifiersManager.modifiers[this.uid], rgisterPropsChange);
 
 		this.childrens.forEach((childONode: IOsimNode) => {
 			childONode.compute(componentFuncs, modifiersManager);
 		});
 	}
 
-	public addChild(childONode) {
+	public addChild(childONode: IOsimNode) {
 		super.addChild(childONode);
-		this.oNode.dom.appendChild(childONode.oNode.dom);
+		this.dom.appendChild(childONode.dom);
 	}
 }

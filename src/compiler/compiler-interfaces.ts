@@ -26,7 +26,7 @@ export interface IHastObjectAttributes {
 	[name: string]: IOsimPropModifier;
 }
 
-export interface IProps {
+export interface IResolvedProps {
 	staticProps: IHastObjectAttributes;
 	dynamicProps: IHastObjectAttributes;
 }
@@ -36,14 +36,4 @@ export interface IHast {
 	attrs: IHastAttribute[];
 	childNodes: IHast[];
 	value?: string;
-}
-
-export interface ICollapseResult {
-	hast: IHast;
-	modifierScopes: IModifierScopes;
-}
-
-export interface IModifierScopes {
-	global: Set<string>;
-	[scope: string]: Set<string>;
 }

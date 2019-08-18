@@ -7,7 +7,7 @@ export default (componentFuncs: ComponentFuncs, modifiersManager: IModifierManag
 	uid: string,
 	builtinFunction: EvaluationFunction
 ): IOsimNode => {
-	return new OsimBuiltinNode(uid, builtinData.usedModifiers, (oNode) => {
+	return new OsimBuiltinNode(uid, builtinData.usedModifiers, (oNode: OsimBuiltinNode) => {
 		const evaluatedONodes = builtinFunction(modifiersManager.modifiers);
 
 		if (evaluatedONodes === null) {

@@ -6,7 +6,7 @@ type AppLauncher = (target: HTMLElement, componentFuncs: ComponentFuncs, modifie
 export default (osmiumApp: IOsimChilds): AppLauncher => (target, componentFuncs, modifiersManager): IOsimNode => {
 	const root: IOsimNode = new OsimComponentNode('root', [['osim:uid', 'root']], osmiumApp);
 	root.compute(componentFuncs, modifiersManager);
-	target.appendChild(root.oNode.dom);
+	target.appendChild(root.dom);
 
 	return root;
 };

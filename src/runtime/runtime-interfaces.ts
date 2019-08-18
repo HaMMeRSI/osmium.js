@@ -60,7 +60,7 @@ export interface IBuiltins {
 	uid: string;
 	type: string;
 	builtinData: IBuiltinData;
-	evaluationFunction: (modifierManager: IModifierManager, modifiers: IOsmiumModifiers) => IOsimNodeData;
+	evaluationFunction: (modifierManager: IModifierManager, modifiers: IOsmiumModifiers) => IOsimNode;
 }
 
 export type IOsimChilds = IOsimNode[];
@@ -72,19 +72,13 @@ export interface IOsimOrder {
 
 export type OsimNodeLauncher = (parent: IOsimNode) => () => void;
 
-export interface IOsimNodeData {
-	dom: Node;
-	removers: (() => void)[];
-	requestedProps: IRequestedProps;
-	order: IOsimOrder[];
-}
-
 export type ComponentFuncs = {
 	[name: string]: (modifiers: IOsmiumComponentModifiers, registerToProps: RegisterToProps) => void;
 };
 
 export interface IOsimNode {
-	oNode: IOsimNodeData;
+	dom: Node;
+	removers: (() => void)[];
 	addChild: (childONode: IOsimNode) => void;
 	addRemover: (remover: () => void) => void;
 	remove: () => void;
