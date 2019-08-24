@@ -30,7 +30,8 @@ export interface IModifierActions {
 }
 
 export interface IModifierManager {
-	modifiers: Map<ComponentUid, any>;
+	modifiers: Record<ComponentUid, any>;
+	getModifier: (modifierName: string) => any;
 	addAction(path: string, modifierActions: ModifierAction);
 	addListener(modifierName, func, getProps?);
 	removeComponent(compinentUid: ComponentUid);
@@ -86,4 +87,4 @@ export interface IOsimNode {
 	compute: (componentFuncs: ComponentFuncs, modifiersManager: IModifierManager) => void;
 }
 
-export type EvaluationFunction = (modifiers: IOsmiumModifiers) => IOsimChilds;
+export type EvaluationFunction = (getModifier: (modifierName: string) => any) => IOsimChilds | IOsimChilds[];

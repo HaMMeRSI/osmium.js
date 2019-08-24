@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ComponentUid, IModifierManager, ModifierAction } from '../runtime-interfaces';
+import { resolveObjectKey, getAccessorFromString } from './objectFunctions';
+import { componentScopeDelimiter } from '../../common/consts';
 interface ITeraidKeys {
 	[key: string]: ITeraid;
 }
@@ -16,14 +18,14 @@ function createBaseTeraid(): ITeraid {
 	return teraid;
 }
 
-function callAllEffects(model, effects) {
-	Object.entries(effects).forEach(([key, value]: any) => {
+function callAllEffects(model, effects: ITeraid) {
+	Object.entries(effects).forEach(([key, effectTree]: any) => {
 		if (key === '$actions') {
-			value.forEach((action) => action(model));
+			effectTree.forEach((action) => action(model));
 		} else if (key === '$listeners') {
-			value.forEach((listener) => listener());
+			effectTree.forEach((listener) => listener());
 		} else {
-			callAllEffects(model[key], value);
+			callAllEffects(model[key], effectTree);
 		}
 	});
 }
@@ -31,7 +33,10 @@ function callAllEffects(model, effects) {
 function initAllEffects(model, effects) {
 	if (typeof model === 'object') {
 		Object.entries(model).forEach(([key]: any) => {
-			effects[key] = createBaseTeraid();
+			if (!(key in effects)) {
+				effects[key] = createBaseTeraid();
+			}
+
 			initAllEffects(model[key], effects[key]);
 		});
 	}
@@ -39,28 +44,29 @@ function initAllEffects(model, effects) {
 
 function createProxer(model, effects) {
 	return new Proxy(model, {
-		get(target, prop: any) {
-			if (!(prop in target)) {
-				target[prop] = Object.create(null);
+		get(_, prop: any) {
+			if (!(prop in model)) {
+				model[prop] = Object.create(null);
 				if (!(prop in effects)) {
 					effects[prop] = createBaseTeraid();
 				}
 			}
 
-			if (typeof target[prop] === 'object') {
-				return createProxer(target[prop], effects[prop]);
+			if (typeof model[prop] === 'object') {
+				return createProxer(model[prop], effects[prop]);
 			}
 
-			return target[prop];
+			return model[prop];
 		},
-		set(target, prop: any, value) {
-			target[prop] = value;
+		set(_, prop: any, value) {
+			model[prop] = value;
 
 			if (prop in effects) {
-				callAllEffects(target[prop], effects[prop]);
+				callAllEffects(model[prop], effects[prop]);
+				initAllEffects(model[prop], effects[prop]);
 			} else {
 				effects[prop] = createBaseTeraid();
-				initAllEffects(value, effects[prop]);
+				initAllEffects(model[prop], effects[prop]);
 			}
 
 			return true;
@@ -72,18 +78,24 @@ export default (): IModifierManager => {
 	// const modifierCollection: IOsmiumModifiers = new Map<string, IModifierInstance>();
 	const modelCollection: Map<ComponentUid, Record<string, any>> = new Map<ComponentUid, Record<string, any>>();
 	const effectsCollection: Map<ComponentUid, ITeraid> = new Map<ComponentUid, ITeraid>();
+	const modifiers = new Proxy(Object.create(null), {
+		get(_, prop: any) {
+			if (!modelCollection.has(prop)) {
+				effectsCollection.set(prop, Object.create(null));
+				modelCollection.set(prop, Object.create(null));
+			}
+
+			return createProxer(modelCollection.get(prop), effectsCollection.get(prop));
+		},
+		set: () => false,
+	});
 
 	return {
-		modifiers: new Proxy(Object.create(null), {
-			get(_, prop: any) {
-				if (!modelCollection.has(prop)) {
-					effectsCollection.set(prop, Object.create(null));
-					modelCollection.set(prop, Object.create(null));
-				}
-				return createProxer(modelCollection.get(prop), effectsCollection.get(prop));
-			},
-			set: () => false,
-		}),
+		modifiers,
+		getModifier(fullModifierName: string) {
+			const [componentUid, path] = fullModifierName.replace(/[{}]/g, '').split(componentScopeDelimiter);
+			return resolveObjectKey(path, modifiers[componentUid]);
+		},
 		addAction(fullModifierName: string, modifierAction: ModifierAction) {
 			const [componentUid, path] = fullModifierName.split('_');
 			if (!effectsCollection.has(componentUid)) {

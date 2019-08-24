@@ -1,7 +1,6 @@
 module.exports = `
 <template>
 	<pre>
-		miniday: {{mimi}}
 		name: {{name}}
 		day: {{day}}
 	</pre>

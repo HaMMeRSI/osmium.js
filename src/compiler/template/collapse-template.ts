@@ -4,14 +4,14 @@ import * as parse5 from 'parse5';
 import { matchDynamicGetterName, matchDynamicGetter, getSpecificMatchDynamicGetter } from '../../runtime/consts/regexes';
 import { componentScopeDelimiter } from '../../common/consts';
 import { IHastAttribute } from '../../common/interfaces';
+import { RUNTIME_PH, OSIM_UID } from './consts';
 
-const OSIM_UID = 'osim:uid';
 let idRunner = 0;
 function getId() {
 	return idRunner++;
 }
 
-function resolveModifiers(hastNode: IHast, parentProps: IResolvedProps, componentScope: string): Set<string> {
+function resolveModifiers(hastNode: IHast, parentProps: IResolvedProps, componentScope: string, runtimeModifiers: string[]): Set<string> {
 	const componentModifiers: Set<string> = new Set();
 
 	if (hastNode.attrs) {
@@ -22,7 +22,9 @@ function resolveModifiers(hastNode: IHast, parentProps: IResolvedProps, componen
 				for (const dynamicGetter of dynamicGetters) {
 					const modifierName = dynamicGetter.split('.')[0];
 
-					if (modifierName in parentProps.staticProps) {
+					if (runtimeModifiers.includes(modifierName)) {
+						attr.value = attr.value.replace(new RegExp(`{{${modifierName}}}`, 'g'), RUNTIME_PH);
+					} else if (modifierName in parentProps.staticProps) {
 						attr.value = parentProps.staticProps[modifierName].value;
 					} else if (modifierName in parentProps.dynamicProps) {
 						const { componentScope, value } = parentProps.dynamicProps[modifierName];
@@ -42,8 +44,13 @@ function resolveModifiers(hastNode: IHast, parentProps: IResolvedProps, componen
 			for (const dynamicGetter of dynamicGettersInText) {
 				const dynamicGetterName = dynamicGetter.match(matchDynamicGetterName)[0];
 				const modifierName = dynamicGetter.match(matchDynamicGetterName)[0].split('.')[0];
+				const runtimeModifiersInText = runtimeModifiers.filter((currMod) => hastNode.value.includes(`{{${currMod}}}`));
 
-				if (modifierName in parentProps.staticProps) {
+				if (runtimeModifiersInText.length > 0) {
+					runtimeModifiersInText.forEach((runtimeModifier) => {
+						hastNode.value = hastNode.value.replace(new RegExp(`{{${runtimeModifier}}}`, 'g'), RUNTIME_PH);
+					});
+				} else if (modifierName in parentProps.staticProps) {
 					hastNode.value = hastNode.value.replace(getSpecificMatchDynamicGetter(dynamicGetterName), parentProps.staticProps[modifierName].value);
 				} else if (modifierName in parentProps.dynamicProps) {
 					const { componentScope, value } = parentProps.dynamicProps[modifierName];
@@ -91,9 +98,9 @@ function createPropsForChild(attrs: IHastAttribute[]): IResolvedProps {
 }
 
 function collapseOsimDocument(osimComponents: OsimDocuments): IHast {
-	function collapseHast(currentOsimDocument: IOsimDocument, activeHast: IHast, props: IResolvedProps, componentUid: string): IHast {
+	function collapseHast(currentOsimDocument: IOsimDocument, activeHast: IHast, props: IResolvedProps, componentUid: string, runtimeModifiers: string[]): IHast {
 		for (const child of activeHast.childNodes) {
-			resolveModifiers(child, props, componentUid);
+			resolveModifiers(child, props, componentUid, runtimeModifiers);
 
 			if (currentOsimDocument.components.includes(child.nodeName)) {
 				const newComponentUid = `${child.nodeName}${getId()}`;
@@ -101,7 +108,8 @@ function collapseOsimDocument(osimComponents: OsimDocuments): IHast {
 					osimComponents[child.nodeName],
 					parse5.parseFragment(osimComponents[child.nodeName].html),
 					createPropsForChild(child.attrs),
-					newComponentUid
+					newComponentUid,
+					runtimeModifiers
 				);
 
 				child.attrs.push({ name: OSIM_UID, value: newComponentUid });
@@ -109,9 +117,13 @@ function collapseOsimDocument(osimComponents: OsimDocuments): IHast {
 			} else if (child.childNodes && child.childNodes.length > 0) {
 				if (child.nodeName === 'osim') {
 					child.attrs.push({ name: OSIM_UID, value: `${child.nodeName}${getId()}` });
+					const loopItemAttr = child.attrs.find((attr) => attr.name === 'item');
+					if (loopItemAttr) {
+						runtimeModifiers.push(loopItemAttr.value);
+					}
 				}
 
-				collapseHast(currentOsimDocument, child, props, componentUid);
+				collapseHast(currentOsimDocument, child, props, componentUid, runtimeModifiers);
 			}
 		}
 
@@ -125,7 +137,8 @@ function collapseOsimDocument(osimComponents: OsimDocuments): IHast {
 			dynamicProps: {},
 			staticProps: {},
 		},
-		'root'
+		'root',
+		[]
 	);
 }
 
