@@ -4,9 +4,9 @@ import { IOsimNode } from '../runtime-interfaces';
 
 export class OsimBuiltinNode extends BaseOsimNode {
 	public uid: string;
+	public isEvaluated;
 	private usedModifiers: string[];
 	private calculateBuiltin: (oNode: IOsimNode) => void;
-
 	public constructor(uid: string, usedModifiers: string[], calculateBuiltin) {
 		super(document.createComment(uid));
 		this.addRemover(() => {
@@ -16,6 +16,7 @@ export class OsimBuiltinNode extends BaseOsimNode {
 		this.uid = uid;
 		this.usedModifiers = usedModifiers.map((modifier) => modifier.replace(/[{}]/g, ''));
 		this.calculateBuiltin = calculateBuiltin;
+		this.isEvaluated = false;
 	}
 
 	public addChild(childOnode: IOsimNode) {

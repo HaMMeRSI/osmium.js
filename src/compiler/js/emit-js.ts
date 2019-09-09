@@ -17,7 +17,8 @@ function buildOsimEntry(osimComponents: OsimDocuments, output: string): void {
 	importStrings.push("import c from 'osmium/osim-component-builder/c';");
 	importStrings.push("import hh from 'osmium/osim-component-builder/h';");
 	importStrings.push("import tt from 'osmium/osim-component-builder/t';");
-	importStrings.push("import bb from 'osmium/osim-component-builder/b';");
+	importStrings.push("import ii from 'osmium/osim-component-builder/i';");
+	importStrings.push("import ff from 'osmium/osim-component-builder/f';");
 	importStrings.push("import mm from 'osmium/helpers/modifier-manager';");
 
 	const entryFile = `${importStrings.join('\n')}
@@ -28,7 +29,8 @@ const funcs = {
 const modifierManager = mm();
 const h = hh(modifierManager);
 const t = tt(modifierManager);
-const b = bb(funcs, modifierManager);
+const i = ii(funcs, modifierManager);
+const f = ff(funcs, modifierManager);
 
 const target = document.getElementById('target');
 const osim = ${componentString}(target,funcs,modifierManager);`;

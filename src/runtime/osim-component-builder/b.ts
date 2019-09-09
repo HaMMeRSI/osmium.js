@@ -12,9 +12,13 @@ export default (componentFuncs: ComponentFuncs, modifiersManager: IModifierManag
 			const evaluatedONodes = builtinFunction(modifiersManager.getModifier);
 
 			if (evaluatedONodes === null) {
-				oNode.removeChilds();
-				modifiersManager.removeComponent(oNode.uid);
-			} else {
+				if (oNode.isEvaluated) {
+					oNode.isEvaluated = false;
+					oNode.removeChilds();
+					modifiersManager.removeComponent(oNode.uid);
+				}
+			} else if (!oNode.isEvaluated) {
+				oNode.isEvaluated = true;
 				evaluatedONodes.forEach((child) => {
 					oNode.addChild(child);
 					child.compute(componentFuncs, modifiersManager);
