@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ComponentUid, IModifierManager, ModifierAction } from '../runtime-interfaces';
-import { resolveObjectKey, getAccessorFromString } from './objectFunctions';
+import { resolveObjectKey } from './objectFunctions';
 import { componentScopeDelimiter } from '../../common/consts';
 interface ITeraidKeys {
 	[key: string]: ITeraid;
@@ -52,6 +52,16 @@ function createProxer(model, effects) {
 				}
 			}
 
+			if (Array.isArray(model)) {
+				if (['splice', 'push', 'pop'].includes(prop)) {
+					return (...args) => {
+						const result = model[prop].call(model, ...args);
+						effects.$listeners.forEach((listener) => listener());
+						return result;
+					};
+				}
+			}
+
 			if (typeof model[prop] === 'object') {
 				return createProxer(model[prop], effects[prop]);
 			}
@@ -70,6 +80,15 @@ function createProxer(model, effects) {
 			}
 
 			return true;
+		},
+		deleteProperty(_, prop: any) {
+			if (prop in model) {
+				delete model[prop];
+				delete effects[prop];
+				return true;
+			}
+
+			return false;
 		},
 	});
 }
