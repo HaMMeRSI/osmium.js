@@ -1,0 +1,16 @@
+<template>
+	<osim for="i in {{count}}" item="i">
+		<osim if="{{i}} !== 1">
+			<div id="{{i}}" class="c{{i}}">
+				{{i}}
+			</div>
+		</osim>
+	</osim>
+</template>
+
+<script>
+	export default (modifiers, props) => {
+		setTimeout(()=>{modifiers.count = [7]}, 1000)
+		setTimeout(()=>{modifiers.count.pop()}, 2500)
+	}
+</script>

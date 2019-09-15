@@ -30,12 +30,14 @@ function componentBuilder(node: IHast): string {
 	const osimUid = node.attrs && node.attrs.find((attr): boolean => attr.name === OSIM_UID);
 	if (node.nodeName === 'osim') {
 		const attrs = node.attrs as IHastAttribute[];
-		const dynamicGettersForCondition = attrs[0].value.match(matchDynamicGetter);
-		const usedModifiers = dynamicGettersForCondition
-			? Array.from(new Set(dynamicGettersForCondition.map((x) => (x === RUNTIME_PH ? 'iterationModifierName' : `'${x}'`)))).join(',')
-			: '';
 
-		if (attrs[0].name === 'if') {
+		const conditionAttr = attrs.find((attr) => attr.name === 'if');
+		if (conditionAttr) {
+			const dynamicGettersForCondition = attrs[0].value.match(matchDynamicGetter);
+			const usedModifiers = dynamicGettersForCondition
+				? Array.from(new Set(dynamicGettersForCondition.map((x) => (x === RUNTIME_PH ? 'iterationModifierName' : `'${x}'`)))).join(',')
+				: '';
+
 			const newIf = dynamicGettersForCondition.reduce((acc, modifier) => {
 				if (modifier === RUNTIME_PH) {
 					return acc.replace(RUNTIME_PH, `getModifier(iterationModifierName)`);
@@ -45,16 +47,13 @@ function componentBuilder(node: IHast): string {
 			}, attrs[0].value);
 			const evaluationFunc = `(getModifier)=>(${newIf})?[${childrens.join(',')}]:null`;
 			return `i([${usedModifiers}],'${osimUid.value}',${evaluationFunc})`;
-		} else if (attrs[0].name === 'for') {
-			const modifierName = dynamicGettersForCondition[0].match(matchDynamicGetterName)[0];
+		} else {
+			const forAttr = attrs.find((attr) => attr.name === 'for');
+			const modifierName = forAttr.value.match(matchDynamicGetterName)[0];
 			const childrensString = childrens.join(',');
-			// const iterationModifierName = `\`{{${modifierName}.\${i}}}\``;
-			// const loopParam = `(getModifier, onodeGen) => getModifier('{{${modifierName}}}').map((_, i) => onodeGen(${iterationModifierName}))`;
 			const onodeGen = `(iterationModifierName)=>[${childrensString}]`;
-			return `f([${usedModifiers}],'${osimUid.value}','${modifierName}',${onodeGen})`;
+			return `f(['${forAttr.value}'],'${osimUid.value}','${modifierName}',${onodeGen})`;
 		}
-
-		return `b(${node.nodeName},[${dynamicGettersForCondition.join(',')}],()=>[${childrens.join(',')}])`;
 	} else if (osimUid) {
 		return `c('${node.nodeName}',${parseAttrs(node.attrs)},[${childrens.join(',')}])`;
 	} else if (node.nodeName === '#document-fragment') {

@@ -1,7 +1,16 @@
-import processTemplate from './template/process-template';
-import { importFile, importedElements } from '../runtime/consts/regexes';
+import { importFile, importedElements, importStatement } from '../runtime/consts/regexes';
 import * as path from 'path';
-import { OsimDocuments, IOsimDocument, IOsimTemplateObject } from './compiler-interfaces';
+import * as fs from 'fs';
+import { OsimDocuments, IOsimDocument } from './compiler-interfaces';
+
+function processComponents(componentsPart: string) {
+	const imports = componentsPart.match(importStatement) || [];
+	const components = componentsPart.match(importedElements) || [];
+	return {
+		imports,
+		components,
+	};
+}
 
 function extractPart(part, osimFileText): string {
 	part = part.toLowerCase();
@@ -16,7 +25,8 @@ function extractPart(part, osimFileText): string {
 }
 
 function parseToDocument(currentOsimFileText, currentFilePath, osimDocuments: OsimDocuments): IOsimDocument {
-	const { imports, components, html }: IOsimTemplateObject = processTemplate(extractPart('template', currentOsimFileText));
+	const html = extractPart('template', currentOsimFileText);
+	const { imports, components } = processComponents(extractPart('components', currentOsimFileText));
 
 	if (imports.length > 0) {
 		for (const imported of imports) {
@@ -25,7 +35,7 @@ function parseToDocument(currentOsimFileText, currentFilePath, osimDocuments: Os
 
 			if (!Object.values(osimDocuments).find((doc: IOsimDocument): boolean => doc.path === currentFilePath)) {
 				const pathR = path.resolve(path.dirname(currentFilePath), filePath);
-				const file = require(pathR);
+				const file = fs.readFileSync(pathR).toString();
 				osimDocuments[compName] = parseToDocument(file, pathR, osimDocuments);
 			}
 		}
@@ -40,10 +50,10 @@ function parseToDocument(currentOsimFileText, currentFilePath, osimDocuments: Os
 	};
 }
 
-function parseRootDocument(osimFileText, currentOsimFileText): OsimDocuments {
+function parseRootDocument(osimFileText, osimFilePath): OsimDocuments {
 	const rootDucument: OsimDocuments = {};
 
-	rootDucument.root = parseToDocument(osimFileText, currentOsimFileText, rootDucument);
+	rootDucument.root = parseToDocument(osimFileText, osimFilePath, rootDucument);
 	return rootDucument;
 }
 

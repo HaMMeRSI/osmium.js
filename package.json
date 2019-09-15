@@ -1,8 +1,8 @@
 {
-	"name": "osmium",
+	"name": "osim",
 	"version": "0.0.1",
 	"description": "Diffrent js lib",
-	"main": "index.js",
+	"main": "./lib/index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
@@ -10,14 +10,21 @@
 		"type": "git",
 		"url": "git+https://github.com/HuMMeRSI/osmium.js.git"
 	},
-	"author": "",
+	"author": "sagi hammer",
 	"license": "MIT",
+	"bin": {
+		"osim": "./lib/cli.js"
+	},
+	"files": [
+		"lib/**/*"
+	],
 	"bugs": {
 		"url": "https://github.com/HuMMeRSI/osmium.js/issues"
 	},
 	"homepage": "https://github.com/HuMMeRSI/osmium.js#readme",
 	"devDependencies": {
 		"@types/node": "^12.0.12",
+		"@types/yargs": "^13.0.2",
 		"@typescript-eslint/eslint-plugin": "^1.11.0",
 		"@typescript-eslint/parser": "^1.11.0",
 		"eslint": "^6.0.1",
@@ -30,6 +37,7 @@
 	"dependencies": {
 		"deepmerge": "^3.3.0",
 		"parse5": "^5.1.0",
-		"uniqid": "^5.0.3"
+		"uniqid": "^5.0.3",
+		"yargs": "^14.0.0"
 	}
 }

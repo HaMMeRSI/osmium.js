@@ -1,30 +1,9 @@
-import * as path from 'path';
-import { OsimDocuments } from './src/compiler/compiler-interfaces';
-import { parseRootDocument } from './src/compiler/osim-file-parser';
-import { emitJsFiles } from './src/compiler/js/emit-js';
-const rootOsimComponent = `
-<template>
-	<osim for="i in {{count}}" item="i">
-		<osim if="{{i}} !== 1">
-			<div id="{{i}}" class="c{{i}}">
-				{{i}}
-			</div>
-		</osim>
-	</osim>
-</template>
+import o from './src/runtime/osim-component-builder/o';
+import c from './src/runtime/osim-component-builder/c';
+import ff from './src/runtime/osim-component-builder/f';
+import hh from './src/runtime/osim-component-builder/h';
+import ii from './src/runtime/osim-component-builder/i';
+import tt from './src/runtime/osim-component-builder/t';
+import mm from './src/runtime/helpers/modifier-manager';
 
-<script>
-	export default (modifiers, props) => {
-		setTimeout(()=>{modifiers.count = [7]}, 1000)
-		setTimeout(()=>{modifiers.count.pop()}, 2500)
-	}
-</script>`;
-const rootComponentSrcPath = path.resolve(process.cwd(), './src/root.js');
-const osimOutputPath = path.resolve(process.cwd(), './osimOutput');
-
-const osimComponents: OsimDocuments = parseRootDocument(rootOsimComponent, rootComponentSrcPath);
-emitJsFiles(osimComponents, osimOutputPath);
-/*		<osim if="{{i}} === 3">
-			{{i}}
-		</osim>
-*/
+export { o, c, ff, hh, ii, tt, mm };

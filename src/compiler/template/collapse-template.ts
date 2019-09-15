@@ -117,9 +117,13 @@ function collapseOsimDocument(osimComponents: OsimDocuments): IHast {
 			} else if (child.childNodes && child.childNodes.length > 0) {
 				if (child.nodeName === 'osim') {
 					child.attrs.push({ name: OSIM_UID, value: `${child.nodeName}${getId()}` });
-					const loopItemAttr = child.attrs.find((attr) => attr.name === 'item');
-					if (loopItemAttr) {
-						runtimeModifiers.push(loopItemAttr.value);
+					const loopIndex = child.attrs.find((attr) => attr.name === 'index');
+					const loopvalue = child.attrs.find((attr) => attr.name === 'value');
+					if (loopIndex) {
+						runtimeModifiers.push(loopIndex.value);
+					}
+					if (loopvalue) {
+						runtimeModifiers.push(loopvalue.value);
 					}
 				}
 
