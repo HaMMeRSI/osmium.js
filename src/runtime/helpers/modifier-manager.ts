@@ -111,12 +111,12 @@ export default (): IModifierManager => {
 
 	return {
 		modifiers,
-		getModifier(fullModifierName: string) {
-			const [componentUid, path] = fullModifierName.replace(/[{}]/g, '').split(componentScopeDelimiter);
+		getModifier(modifierName: string) {
+			const [componentUid, path] = modifierName.split(componentScopeDelimiter);
 			return resolveObjectKey(path, modifiers[componentUid]);
 		},
-		addAction(fullModifierName: string, modifierAction: ModifierAction) {
-			const [componentUid, path] = fullModifierName.split('_');
+		addAction(modifierName: string, modifierAction: ModifierAction) {
+			const [componentUid, path] = modifierName.split('_');
 			if (!effectsCollection.has(componentUid)) {
 				effectsCollection.set(componentUid, Object.create(null));
 				modelCollection.set(componentUid, Object.create(null));
@@ -143,8 +143,8 @@ export default (): IModifierManager => {
 			obj.$actions.push(modifierAction);
 			return () => obj.$actions.splice(obj.$actions.indexOf(modifierAction), 1);
 		},
-		addListener(fullModifierName, func, getProps = () => null) {
-			const [componentUid, path] = fullModifierName.split('_');
+		addListener(modifierName, func, getProps = () => null) {
+			const [componentUid, path] = modifierName.split('_');
 			if (!effectsCollection.has(componentUid)) {
 				effectsCollection.set(componentUid, Object.create(null));
 				modelCollection.set(componentUid, Object.create(null));

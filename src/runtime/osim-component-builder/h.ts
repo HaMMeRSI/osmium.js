@@ -1,4 +1,4 @@
-import { matchDynamicGetterName } from '../consts/regexes';
+import { matchModifierName } from '../consts/regexes';
 import { resolveObjectKey, getAccessorFromString } from '../helpers/objectFunctions';
 import { IModifierManager, IOsimChilds, IOsimNode, ModifierAction } from '../runtime-interfaces';
 import { OsimNode } from '../osim-node/OsimNode';
@@ -8,7 +8,7 @@ export default (modifierManager: IModifierManager) => (tagName: string = 'div', 
 	const hONode = new OsimNode(dom, childs);
 
 	attrs.forEach(([name, value]): void => {
-		const modifierName: RegExpMatchArray = value.match(matchDynamicGetterName);
+		const modifierName: RegExpMatchArray = value.match(matchModifierName);
 
 		if (modifierName) {
 			let action: ModifierAction = (newAttrValue): void => {

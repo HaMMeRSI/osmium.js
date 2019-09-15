@@ -1,7 +1,7 @@
 import { OsimDocuments, IHast, IResolvedProps } from '../compiler-interfaces';
 import { IOsimDocument, IHastObjectAttributes } from '../compiler-interfaces';
 import * as parse5 from 'parse5';
-import { matchDynamicGetterName, matchDynamicGetter, getSpecificMatchDynamicGetter } from '../../runtime/consts/regexes';
+import { matchModifierName, matchFullModifierName, getSpecificMatchFullModifierName } from '../../runtime/consts/regexes';
 import { componentScopeDelimiter } from '../../common/consts';
 import { IHastAttribute } from '../../common/interfaces';
 import { RUNTIME_PH, OSIM_UID } from './consts';
@@ -16,11 +16,11 @@ function resolveModifiers(hastNode: IHast, parentProps: IResolvedProps, componen
 
 	if (hastNode.attrs) {
 		hastNode.attrs.forEach((attr): void => {
-			const dynamicGetters = attr.value.match(matchDynamicGetterName);
+			const modifierAccessorNames = attr.value.match(matchModifierName);
 
-			if (dynamicGetters) {
-				for (const dynamicGetter of dynamicGetters) {
-					const modifierName = dynamicGetter.split('.')[0];
+			if (modifierAccessorNames) {
+				for (const modifierAccessorName of modifierAccessorNames) {
+					const modifierName = modifierAccessorName.split('.')[0];
 
 					if (runtimeModifiers.includes(modifierName)) {
 						attr.value = attr.value.replace(new RegExp(`{{${modifierName}}}`, 'g'), RUNTIME_PH);
@@ -30,20 +30,20 @@ function resolveModifiers(hastNode: IHast, parentProps: IResolvedProps, componen
 						const { componentScope, value } = parentProps.dynamicProps[modifierName];
 						attr.value = attr.value.replace(modifierName, `${componentScope}${componentScopeDelimiter}${value}`);
 					} else {
-						const newModifier = `${componentScope}${componentScopeDelimiter}${dynamicGetter}`;
-						attr.value = attr.value.replace(dynamicGetter, newModifier);
+						const newModifier = `${componentScope}${componentScopeDelimiter}${modifierAccessorName}`;
+						attr.value = attr.value.replace(modifierAccessorName, newModifier);
 						componentModifiers.add(newModifier.split('.')[0]);
 					}
 				}
 			}
 		});
 	} else if (hastNode.nodeName === '#text') {
-		const dynamicGettersInText = hastNode.value.match(matchDynamicGetter);
+		const fullModifierAccessorNames = hastNode.value.match(matchFullModifierName);
 
-		if (dynamicGettersInText) {
-			for (const dynamicGetter of dynamicGettersInText) {
-				const dynamicGetterName = dynamicGetter.match(matchDynamicGetterName)[0];
-				const modifierName = dynamicGetter.match(matchDynamicGetterName)[0].split('.')[0];
+		if (fullModifierAccessorNames) {
+			for (const fullModifierAccessor of fullModifierAccessorNames) {
+				const fullModifierAccessorName = fullModifierAccessor.match(matchModifierName)[0];
+				const modifierName = fullModifierAccessor.match(matchModifierName)[0].split('.')[0];
 				const runtimeModifiersInText = runtimeModifiers.filter((currMod) => hastNode.value.includes(`{{${currMod}}}`));
 
 				if (runtimeModifiersInText.length > 0) {
@@ -51,17 +51,17 @@ function resolveModifiers(hastNode: IHast, parentProps: IResolvedProps, componen
 						hastNode.value = hastNode.value.replace(new RegExp(`{{${runtimeModifier}}}`, 'g'), RUNTIME_PH);
 					});
 				} else if (modifierName in parentProps.staticProps) {
-					hastNode.value = hastNode.value.replace(getSpecificMatchDynamicGetter(dynamicGetterName), parentProps.staticProps[modifierName].value);
+					hastNode.value = hastNode.value.replace(getSpecificMatchFullModifierName(fullModifierAccessorName), parentProps.staticProps[modifierName].value);
 				} else if (modifierName in parentProps.dynamicProps) {
 					const { componentScope, value } = parentProps.dynamicProps[modifierName];
 
 					hastNode.value = hastNode.value.replace(
-						getSpecificMatchDynamicGetter(dynamicGetterName),
-						`{{${componentScope}${componentScopeDelimiter}${dynamicGetterName.replace(modifierName, value)}}}`
+						getSpecificMatchFullModifierName(fullModifierAccessorName),
+						`{{${componentScope}${componentScopeDelimiter}${fullModifierAccessorName.replace(modifierName, value)}}}`
 					);
 				} else {
-					const newModifier = `${componentScope}${componentScopeDelimiter}${dynamicGetterName}`;
-					hastNode.value = hastNode.value.replace(getSpecificMatchDynamicGetter(dynamicGetterName), `{{${newModifier}}}`);
+					const newModifier = `${componentScope}${componentScopeDelimiter}${fullModifierAccessorName}`;
+					hastNode.value = hastNode.value.replace(getSpecificMatchFullModifierName(fullModifierAccessorName), `{{${newModifier}}}`);
 					componentModifiers.add(newModifier.split('.')[0]);
 				}
 			}
@@ -76,7 +76,7 @@ function createPropsForChild(attrs: IHastAttribute[]): IResolvedProps {
 	const dynamicProps: IHastObjectAttributes = {};
 
 	for (const { name, value } of attrs) {
-		const dynamicName = value.match(matchDynamicGetterName);
+		const dynamicName = value.match(matchModifierName);
 
 		if (dynamicName) {
 			const [modifierComponentScope, modifier] = dynamicName[0].split(componentScopeDelimiter);

@@ -20,14 +20,8 @@ export interface IModifierInstance {
 	actions: ModifierAction[];
 }
 export type IOsmiumModifiers = Map<ComponentUid, IModifierInstance>;
-// export interface IOsmiumModifiers {
-// 	[componentUid: string]: IOsmiumComponentModifiers;
-// }
-export type ModifierAction = (newValue?) => void;
 
-export interface IModifierActions {
-	[fullModifierName: string]: ModifierAction[];
-}
+export type ModifierAction = (newValue?) => void;
 
 export interface IModifierManager {
 	modifiers: Record<ComponentUid, any>;

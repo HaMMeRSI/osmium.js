@@ -14,7 +14,7 @@ export class OsimBuiltinNode extends BaseOsimNode {
 		});
 
 		this.uid = uid;
-		this.usedModifiers = usedModifiers.map((modifier) => modifier.replace(/[{}]/g, ''));
+		this.usedModifiers = usedModifiers;
 		this.calculateBuiltin = calculateBuiltin;
 		this.isEvaluated = false;
 	}

@@ -1,5 +1,5 @@
 import { ComponentFuncs } from './../runtime-interfaces';
-import { matchDynamicGetterName } from '../consts/regexes';
+import { matchModifierName } from '../consts/regexes';
 import { RegisterToProps, IOsimChilds, IOsimNode, IModifierManager, IRequestedProps } from '../runtime-interfaces';
 import { componentScopeDelimiter } from '../../common/consts';
 import { BaseOsimNode } from './BaseOsimNode';
@@ -18,11 +18,11 @@ export class OsimComponentNode extends BaseOsimNode {
 		this.componentName = componentName;
 		this.props = props;
 		this.requestedProps = props.reduce((requestedProps, [name, value]) => {
-			const dynamicGetter = value.match(matchDynamicGetterName);
-			if (dynamicGetter) {
+			const modifierAccessorName = value.match(matchModifierName);
+			if (modifierAccessorName) {
 				const requestedProp = {
 					attr: name,
-					modifier: dynamicGetter[0].split('.')[0],
+					modifier: modifierAccessorName[0].split('.')[0],
 				};
 				if (uid in requestedProps) {
 					requestedProps[uid].push(requestedProp);

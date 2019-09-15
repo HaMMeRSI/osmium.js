@@ -1,6 +1,5 @@
-import { matchDynamicGetterName, matchDynamicGetter } from '../../runtime/consts/regexes';
+import { matchModifierName, matchFullModifierName } from '../../runtime/consts/regexes';
 import { IHast } from '../compiler-interfaces';
-import { IHastAttribute } from '../../common/interfaces';
 import { OSIM_UID, RUNTIME_PH } from './consts';
 
 function replaceRunTime(text) {
@@ -9,6 +8,35 @@ function replaceRunTime(text) {
 
 function parseAttrs(attrs = []): string {
 	return replaceRunTime(JSON.stringify(attrs.map(({ name, value }): string[] => [name, value])));
+}
+
+function handleOsimCondition(node: IHast, childrens, conditionAttr) {
+	const osimUid = node.attrs.find((attr): boolean => attr.name === OSIM_UID);
+
+	const fullModifierNameForCondition = conditionAttr.value.match(matchFullModifierName);
+	const usedModifiers = fullModifierNameForCondition
+		? Array.from(new Set(fullModifierNameForCondition.map((x) => (x === RUNTIME_PH ? 'iterationModifierName' : `'${x.match(matchModifierName)[0]}'`)))).join(',')
+		: '';
+
+	const newIf = fullModifierNameForCondition.reduce((acc, modifier) => {
+		if (modifier === RUNTIME_PH) {
+			return acc.replace(RUNTIME_PH, `getModifier(iterationModifierName)`);
+		}
+
+		const modifierName = modifier.match(matchModifierName)[0];
+		return acc.replace(modifier, `getModifier('${modifierName}')`);
+	}, conditionAttr.value);
+	const evaluationFunc = `(getModifier)=>(${newIf})?[${childrens.join(',')}]:null`;
+	return `i([${usedModifiers}],'${osimUid.value}',${evaluationFunc})`;
+}
+
+function handleOsimLoop(node: IHast, childrens) {
+	const osimUid = node.attrs.find((attr): boolean => attr.name === OSIM_UID);
+	const forAttr = node.attrs.find((attr) => attr.name === 'for');
+	const modifierName = forAttr.value.match(matchModifierName)[0];
+	const childrensString = childrens.join(',');
+	const onodeGen = `(iterationModifierName)=>[${childrensString}]`;
+	return `f(['${modifierName}'],'${osimUid.value}','${modifierName}',${onodeGen})`;
 }
 
 function componentBuilder(node: IHast): string {
@@ -27,34 +55,17 @@ function componentBuilder(node: IHast): string {
 
 	const childrens: string[] = node.childNodes.map((child): string => componentBuilder(child)).filter((child) => !!child);
 
-	const osimUid = node.attrs && node.attrs.find((attr): boolean => attr.name === OSIM_UID);
 	if (node.nodeName === 'osim') {
-		const attrs = node.attrs as IHastAttribute[];
-
-		const conditionAttr = attrs.find((attr) => attr.name === 'if');
+		const conditionAttr = node.attrs.find((attr) => attr.name === 'if');
 		if (conditionAttr) {
-			const dynamicGettersForCondition = attrs[0].value.match(matchDynamicGetter);
-			const usedModifiers = dynamicGettersForCondition
-				? Array.from(new Set(dynamicGettersForCondition.map((x) => (x === RUNTIME_PH ? 'iterationModifierName' : `'${x}'`)))).join(',')
-				: '';
-
-			const newIf = dynamicGettersForCondition.reduce((acc, modifier) => {
-				if (modifier === RUNTIME_PH) {
-					return acc.replace(RUNTIME_PH, `getModifier(iterationModifierName)`);
-				}
-				const modifierName = modifier.match(matchDynamicGetterName)[0];
-				return acc.replace(modifier, `getModifier('{{${modifierName}}}')`);
-			}, attrs[0].value);
-			const evaluationFunc = `(getModifier)=>(${newIf})?[${childrens.join(',')}]:null`;
-			return `i([${usedModifiers}],'${osimUid.value}',${evaluationFunc})`;
+			return handleOsimCondition(node, childrens, conditionAttr);
 		} else {
-			const forAttr = attrs.find((attr) => attr.name === 'for');
-			const modifierName = forAttr.value.match(matchDynamicGetterName)[0];
-			const childrensString = childrens.join(',');
-			const onodeGen = `(iterationModifierName)=>[${childrensString}]`;
-			return `f(['${forAttr.value}'],'${osimUid.value}','${modifierName}',${onodeGen})`;
+			return handleOsimLoop(node, childrens);
 		}
-	} else if (osimUid) {
+	}
+
+	const osimUid = node.attrs && node.attrs.find((attr): boolean => attr.name === OSIM_UID);
+	if (osimUid) {
 		return `c('${node.nodeName}',${parseAttrs(node.attrs)},[${childrens.join(',')}])`;
 	} else if (node.nodeName === '#document-fragment') {
 		return `[${childrens.join(',')}]`;

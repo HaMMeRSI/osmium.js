@@ -1,4 +1,4 @@
-import { matchDynamicGetter, matchDynamicGetterName } from '../consts/regexes';
+import { matchFullModifierName, matchModifierName } from '../consts/regexes';
 import { IModifierManager, IOsimNode } from '../runtime-interfaces';
 import { resolveObjectKey, getAccessorFromString } from '../helpers/objectFunctions';
 import { OsimNode } from '../osim-node/OsimNode';
@@ -7,16 +7,16 @@ export default (modifierManager: IModifierManager) => (text: string): IOsimNode 
 	const dom: Text = document.createTextNode(text);
 	const tONode = new OsimNode(dom);
 
-	const textModifiers = text.match(matchDynamicGetter);
+	const textModifiers = text.match(matchFullModifierName);
 
 	if (textModifiers) {
 		dom.nodeValue = '';
-		const splitedText = text.split(matchDynamicGetter);
+		const splitedText = text.split(matchFullModifierName);
 		const brokenText: string[] = textModifiers.flatMap((modifierName, i): string[] => [splitedText[i], modifierName]);
 		brokenText.push(splitedText[splitedText.length - 1]);
 
 		for (let i = 0; i < brokenText.length; i++) {
-			const modifierName = brokenText[i].match(matchDynamicGetterName);
+			const modifierName = brokenText[i].match(matchModifierName);
 
 			if (modifierName) {
 				const action = (value): void => {
