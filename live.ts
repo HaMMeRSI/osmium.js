@@ -11,17 +11,17 @@ const rootOsimComponent = `
 	<osim for="{{count}}" value="i">
 		<osim if="{{i}} !== 1 && {{toShow}}">
 			<div id="{{i}}" class="c{{i}}">
-				{{i}}
+				{{changer}}: {{i}}
 			</div>
 		</osim>
 	</osim>
 </template>
 
 <script>
-	export default (modifiers, props) => {
+	export default (modifiers) => {
 		modifiers.toShow = true;
-		setTimeout(()=>{modifiers.count = [7]}, 1000)
-		setTimeout(()=>{modifiers.count.pop()}, 2500)
+		setTimeout(()=>{modifiers.count = [7]}, 1000);
+		setTimeout(()=>{modifiers.count.pop()}, 2500);
 	}
 </script>`;
 const rootComponentSrcPath = path.resolve(process.cwd(), './src/root.js');

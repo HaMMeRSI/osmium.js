@@ -8,4 +8,4 @@ export interface IHastAttribute {
 	value: string;
 }
 
-export type OsimNodeProps = string[][];
+export type OsimNodeAttrs = string[][];

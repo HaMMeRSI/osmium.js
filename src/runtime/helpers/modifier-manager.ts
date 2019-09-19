@@ -136,14 +136,14 @@ export default (): IModifierManager => {
 				return currEffect[key];
 			}, effectsCollection.get(componentUid));
 
-			if (currModel) {
+			if (currModel !== undefined) {
 				modifierAction(currModel);
 			}
 
 			obj.$actions.push(modifierAction);
 			return () => obj.$actions.splice(obj.$actions.indexOf(modifierAction), 1);
 		},
-		addListener(modifierName, func, getProps = () => null) {
+		addListener(modifierName, func) {
 			const [componentUid, path] = modifierName.split('_');
 			if (!effectsCollection.has(componentUid)) {
 				effectsCollection.set(componentUid, Object.create(null));
@@ -163,12 +163,11 @@ export default (): IModifierManager => {
 				return currEffect[key];
 			}, effectsCollection.get(componentUid)) as ITeraid;
 
-			const listener = () => func(getProps());
-			if (currModel) {
-				listener();
+			if (currModel !== undefined) {
+				func();
 			}
-			obj.$listeners.push(listener);
-			return () => obj.$listeners.splice(obj.$listeners.indexOf(listener), 1);
+			obj.$listeners.push(func);
+			return () => obj.$listeners.splice(obj.$listeners.indexOf(func), 1);
 		},
 		removeComponent(compinentUid: ComponentUid) {
 			if (modelCollection.has(compinentUid)) {

@@ -11,64 +11,64 @@ function getId() {
 	return idRunner++;
 }
 
-function resolveModifiers(hastNode: IHast, parentProps: IResolvedProps, componentScope: string, runtimeModifiers: string[]): Set<string> {
-	const componentModifiers: Set<string> = new Set();
+function resolveDomNodeModifiers(hastNode: IHast, parentProps: IResolvedProps, componentScope: string, runtimeModifiers: string[]) {
+	const domModifiers: Set<string> = new Set();
 
-	if (hastNode.attrs) {
-		hastNode.attrs.forEach((attr): void => {
-			const modifierAccessorNames = attr.value.match(matchModifierName);
+	hastNode.attrs.forEach((attr): void => {
+		const modifierAccessorNames = attr.value.match(matchModifierName);
 
-			if (modifierAccessorNames) {
-				for (const modifierAccessorName of modifierAccessorNames) {
-					const modifierName = modifierAccessorName.split('.')[0];
+		if (modifierAccessorNames) {
+			for (const modifierAccessorName of modifierAccessorNames) {
+				const modifierName = modifierAccessorName.split('.')[0];
 
-					if (runtimeModifiers.includes(modifierName)) {
-						attr.value = attr.value.replace(new RegExp(`{{${modifierName}}}`, 'g'), RUNTIME_PH);
-					} else if (modifierName in parentProps.staticProps) {
-						attr.value = parentProps.staticProps[modifierName].value;
-					} else if (modifierName in parentProps.dynamicProps) {
-						const { componentScope, value } = parentProps.dynamicProps[modifierName];
-						attr.value = attr.value.replace(modifierName, `${componentScope}${componentScopeDelimiter}${value}`);
-					} else {
-						const newModifier = `${componentScope}${componentScopeDelimiter}${modifierAccessorName}`;
-						attr.value = attr.value.replace(modifierAccessorName, newModifier);
-						componentModifiers.add(newModifier.split('.')[0]);
-					}
-				}
-			}
-		});
-	} else if (hastNode.nodeName === '#text') {
-		const fullModifierAccessorNames = hastNode.value.match(matchFullModifierName);
-
-		if (fullModifierAccessorNames) {
-			for (const fullModifierAccessor of fullModifierAccessorNames) {
-				const fullModifierAccessorName = fullModifierAccessor.match(matchModifierName)[0];
-				const modifierName = fullModifierAccessor.match(matchModifierName)[0].split('.')[0];
-				const runtimeModifiersInText = runtimeModifiers.filter((currMod) => hastNode.value.includes(`{{${currMod}}}`));
-
-				if (runtimeModifiersInText.length > 0) {
-					runtimeModifiersInText.forEach((runtimeModifier) => {
-						hastNode.value = hastNode.value.replace(new RegExp(`{{${runtimeModifier}}}`, 'g'), RUNTIME_PH);
-					});
+				if (runtimeModifiers.includes(modifierName)) {
+					attr.value = attr.value.replace(new RegExp(`{{${modifierName}}}`, 'g'), RUNTIME_PH);
 				} else if (modifierName in parentProps.staticProps) {
-					hastNode.value = hastNode.value.replace(getSpecificMatchFullModifierName(fullModifierAccessorName), parentProps.staticProps[modifierName].value);
+					attr.value = parentProps.staticProps[modifierName].value;
 				} else if (modifierName in parentProps.dynamicProps) {
 					const { componentScope, value } = parentProps.dynamicProps[modifierName];
-
-					hastNode.value = hastNode.value.replace(
-						getSpecificMatchFullModifierName(fullModifierAccessorName),
-						`{{${componentScope}${componentScopeDelimiter}${fullModifierAccessorName.replace(modifierName, value)}}}`
-					);
+					attr.value = attr.value.replace(modifierName, `${componentScope}${componentScopeDelimiter}${value}`);
 				} else {
-					const newModifier = `${componentScope}${componentScopeDelimiter}${fullModifierAccessorName}`;
-					hastNode.value = hastNode.value.replace(getSpecificMatchFullModifierName(fullModifierAccessorName), `{{${newModifier}}}`);
-					componentModifiers.add(newModifier.split('.')[0]);
+					const newModifier = `${componentScope}${componentScopeDelimiter}${modifierAccessorName}`;
+					attr.value = attr.value.replace(modifierAccessorName, newModifier);
+					domModifiers.add(newModifier.split('.')[0]);
 				}
+			}
+		}
+	});
+
+	return domModifiers;
+}
+
+function resolveTextNodeModifiers(hastNode: IHast, parentProps: IResolvedProps, componentScope: string, runtimeModifiers: string[]) {
+	const textModifiers: Set<string> = new Set();
+	const fullModifierAccessorNames = hastNode.value.match(matchFullModifierName);
+
+	if (fullModifierAccessorNames) {
+		for (const fullModifierAccessor of fullModifierAccessorNames) {
+			const fullModifierAccessorName = fullModifierAccessor.match(matchModifierName)[0];
+			const modifierName = fullModifierAccessorName.split('.')[0];
+
+			if (runtimeModifiers.includes(fullModifierAccessorName)) {
+				hastNode.value = hastNode.value.replace(new RegExp(fullModifierAccessorName, 'g'), RUNTIME_PH);
+			} else if (modifierName in parentProps.staticProps) {
+				hastNode.value = hastNode.value.replace(getSpecificMatchFullModifierName(fullModifierAccessorName), parentProps.staticProps[modifierName].value);
+			} else if (modifierName in parentProps.dynamicProps) {
+				const { componentScope, value } = parentProps.dynamicProps[modifierName];
+
+				hastNode.value = hastNode.value.replace(
+					getSpecificMatchFullModifierName(fullModifierAccessorName),
+					`{{${componentScope}${componentScopeDelimiter}${fullModifierAccessorName.replace(modifierName, value)}}}`
+				);
+			} else {
+				const newModifier = `${componentScope}${componentScopeDelimiter}${fullModifierAccessorName}`;
+				hastNode.value = hastNode.value.replace(getSpecificMatchFullModifierName(fullModifierAccessorName), `{{${newModifier}}}`);
+				textModifiers.add(newModifier.split('.')[0]);
 			}
 		}
 	}
 
-	return componentModifiers;
+	return textModifiers;
 }
 
 function createPropsForChild(attrs: IHastAttribute[]): IResolvedProps {
@@ -100,7 +100,12 @@ function createPropsForChild(attrs: IHastAttribute[]): IResolvedProps {
 function collapseOsimDocument(osimComponents: OsimDocuments): IHast {
 	function collapseHast(currentOsimDocument: IOsimDocument, activeHast: IHast, props: IResolvedProps, componentUid: string, runtimeModifiers: string[]): IHast {
 		for (const child of activeHast.childNodes) {
-			resolveModifiers(child, props, componentUid, runtimeModifiers);
+			let reolveModifierFunction = resolveDomNodeModifiers;
+			if (child.nodeName === '#text') {
+				reolveModifierFunction = resolveTextNodeModifiers;
+			}
+
+			reolveModifierFunction(child, props, componentUid, runtimeModifiers);
 
 			if (currentOsimDocument.components.includes(child.nodeName)) {
 				const newComponentUid = `${child.nodeName}${getId()}`;
