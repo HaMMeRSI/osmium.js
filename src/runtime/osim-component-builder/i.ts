@@ -2,11 +2,11 @@ import { IOsimNode, IModifierManager, ComponentFuncs, EvaluationFunction } from 
 import { OsimBuiltinNode } from '../osim-node/OsimBuiltinNode';
 
 export default (componentFuncs: ComponentFuncs, modifiersManager: IModifierManager) => (
-	usedModifiers: string[],
+	usedScopedModifierNames: string[],
 	uid: string,
 	builtinFunction: EvaluationFunction
 ): IOsimNode => {
-	return new OsimBuiltinNode(uid, usedModifiers, (oNode: OsimBuiltinNode) => {
+	return new OsimBuiltinNode(uid, usedScopedModifierNames, (oNode: OsimBuiltinNode) => {
 		const evaluatedONodes = builtinFunction(modifiersManager.getModifier);
 
 		if (evaluatedONodes === null) {

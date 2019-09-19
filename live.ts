@@ -1,4 +1,4 @@
-import * as path from 'path';
+import path from 'path';
 import { OsimDocuments } from './src/compiler/compiler-interfaces';
 import { parseRootDocument } from './src/compiler/osim-file-parser';
 import { emitJsFiles } from './src/compiler/js/emit-js';

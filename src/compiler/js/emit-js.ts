@@ -18,7 +18,7 @@ function buildOsimEntry(osimComponents: OsimDocuments, output: string): void {
 		importStrings.push(`import ${name} from './${getOsimScriptPath(value.path).replace(/\\/g, '/')}';`);
 	}
 	importStrings.push("import { o } from 'osim';");
-	importStrings.push("import { c } from 'osim';");
+	importStrings.push("import { cc } from 'osim';");
 	importStrings.push("import { hh } from 'osim';");
 	importStrings.push("import { tt } from 'osim';");
 	importStrings.push("import { ii } from 'osim';");
@@ -32,6 +32,7 @@ export default (options) => {
 		${Object.values(Object.keys(osimComponents).map((name): string => name)).join(',\n\t\t')},
 	};
 	const modifierManager = mm();
+	const c = cc(modifierManager);
 	const h = hh(modifierManager);
 	const t = tt(modifierManager);
 	const i = ii(funcs, modifierManager);

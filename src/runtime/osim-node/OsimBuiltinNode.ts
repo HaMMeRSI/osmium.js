@@ -2,19 +2,22 @@ import { ComponentFuncs, IModifierManager } from './../runtime-interfaces';
 import { BaseOsimNode } from './BaseOsimNode';
 import { IOsimNode } from '../runtime-interfaces';
 
+type CalculateBuiltin = (oNode: IOsimNode) => void;
+
 export class OsimBuiltinNode extends BaseOsimNode {
 	public uid: string;
 	public isEvaluated;
-	private usedModifiers: string[];
-	private calculateBuiltin: (oNode: IOsimNode) => void;
-	public constructor(uid: string, usedModifiers: string[], calculateBuiltin) {
+	private usedScopedModifierNames: string[];
+	private calculateBuiltin: CalculateBuiltin;
+
+	public constructor(uid: string, usedScopedModifierNames: string[], calculateBuiltin: CalculateBuiltin) {
 		super(document.createComment(uid));
 		this.addRemover(() => {
 			(this.dom as Element).remove();
 		});
 
 		this.uid = uid;
-		this.usedModifiers = usedModifiers;
+		this.usedScopedModifierNames = usedScopedModifierNames;
 		this.calculateBuiltin = calculateBuiltin;
 		this.isEvaluated = false;
 	}
@@ -26,7 +29,7 @@ export class OsimBuiltinNode extends BaseOsimNode {
 
 	public compute(componentFuncs: ComponentFuncs, modifiersManager: IModifierManager) {
 		super.compute(componentFuncs, modifiersManager);
-		for (const requestedModifier of this.usedModifiers) {
+		for (const requestedModifier of this.usedScopedModifierNames) {
 			this.addRemover(modifiersManager.addListener(requestedModifier, () => this.calculateBuiltin(this)));
 		}
 	}

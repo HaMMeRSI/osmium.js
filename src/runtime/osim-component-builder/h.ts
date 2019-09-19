@@ -8,12 +8,12 @@ export default (modifierManager: IModifierManager) => (tagName: string = 'div', 
 	const hONode = new OsimNode(dom, childs);
 
 	attrs.forEach(([name, value]): void => {
-		const modifierName: RegExpMatchArray = value.match(matchModifierName);
+		const modifierAccessorName: RegExpMatchArray = value.match(matchModifierName);
 
-		if (modifierName) {
+		if (modifierAccessorName) {
 			let action: ModifierAction = (newAttrValue): void => {
-				if (typeof value === 'object') {
-					dom.setAttribute(name, resolveObjectKey(getAccessorFromString(modifierName[0]), newAttrValue));
+				if (typeof newAttrValue === 'object') {
+					dom.setAttribute(name, resolveObjectKey(getAccessorFromString(modifierAccessorName[0]), newAttrValue));
 				} else {
 					dom.setAttribute(name, newAttrValue);
 				}
@@ -21,16 +21,15 @@ export default (modifierManager: IModifierManager) => (tagName: string = 'div', 
 
 			if (name.startsWith('@')) {
 				action = (newAttrValue: (e) => void): void => {
-					// This test is because auto activate action in enhaceModifier
+					// This test is because auto activate action
 					if (newAttrValue) {
-						const eventName = name.split('@')[1];
 						// dom.removeEventListener(eventName, oldAttrValue);
-						dom.addEventListener(eventName, newAttrValue);
+						dom.addEventListener(name.slice(1), newAttrValue);
 					}
 				};
 			}
 
-			hONode.addRemover(modifierManager.addAction(modifierName[0], action));
+			hONode.addRemover(modifierManager.addAction(modifierAccessorName[0], action));
 		} else {
 			dom.setAttribute(name, value);
 		}

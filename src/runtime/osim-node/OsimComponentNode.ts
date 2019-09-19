@@ -1,4 +1,4 @@
-import { ComponentFuncs } from '../runtime-interfaces';
+import { ComponentFuncs, IComponentFuncEvents } from '../runtime-interfaces';
 import { matchModifierName } from '../consts/regexes';
 import { IOsimChilds, IOsimNode, IModifierManager } from '../runtime-interfaces';
 import { BaseOsimNode } from './BaseOsimNode';
@@ -9,9 +9,15 @@ export class OsimComponentNode extends BaseOsimNode {
 	public uid: string;
 	public componentName: string;
 	public requestedProps: string[][];
+	private dispose: () => void;
+	private emptyResult: IComponentFuncEvents;
 
 	public constructor(componentName: string, attrs: OsimNodeAttrs, childs: IOsimChilds) {
 		super(document.createDocumentFragment());
+		this.emptyResult = {
+			dispose: () => {},
+			update: () => {},
+		};
 		this.uid = attrs.find(([name]): boolean => name === OSIM_UID)[1];
 		this.componentName = componentName;
 		this.requestedProps = (attrs || [])
@@ -27,7 +33,11 @@ export class OsimComponentNode extends BaseOsimNode {
 	public compute(componentFuncs: ComponentFuncs, modifiersManager: IModifierManager) {
 		const componentFunction = componentFuncs[this.componentName];
 
-		const onPropsChange = componentFunction(modifiersManager.modifiers[this.uid]);
+		this.childrens.forEach((childONode: IOsimNode) => {
+			childONode.compute(componentFuncs, modifiersManager);
+		});
+		const { update, dispose } = componentFunction(modifiersManager.modifiers[this.uid]) || this.emptyResult;
+		this.dispose = dispose;
 		this.requestedProps.forEach(([, scopedModifierName]) => {
 			this.addRemover(
 				modifiersManager.addListener(scopedModifierName, () => {
@@ -36,18 +46,19 @@ export class OsimComponentNode extends BaseOsimNode {
 						return acc;
 					}, {});
 
-					onPropsChange(props);
+					update(props);
 				})
 			);
-		});
-
-		this.childrens.forEach((childONode: IOsimNode) => {
-			childONode.compute(componentFuncs, modifiersManager);
 		});
 	}
 
 	public addChild(childONode: IOsimNode) {
 		super.addChild(childONode);
 		this.dom.appendChild(childONode.dom);
+	}
+
+	public remove() {
+		super.remove();
+		this.dispose();
 	}
 }

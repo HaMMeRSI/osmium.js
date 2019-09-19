@@ -21,10 +21,12 @@ export interface IModifierManager {
 	removeComponent(compinentUid: ComponentUid);
 }
 
-export type IOsimChilds = IOsimNode[];
-
+export interface IComponentFuncEvents {
+	update: (props: unknown) => void;
+	dispose: () => void;
+}
 export type ComponentFuncs = {
-	[name: string]: (modifiers: IOsmiumComponentModifiers) => (props: unknown) => void;
+	[name: string]: (modifiers: IOsmiumComponentModifiers) => IComponentFuncEvents;
 };
 
 export interface IOsimNode {
@@ -37,4 +39,5 @@ export interface IOsimNode {
 	compute: (componentFuncs: ComponentFuncs, modifiersManager: IModifierManager) => void;
 }
 
-export type EvaluationFunction = (getModifier: (modifierName: string) => any) => IOsimChilds | IOsimChilds[];
+export type IOsimChilds = IOsimNode[];
+export type EvaluationFunction = (getModifier: (modifierName: string) => any) => IOsimChilds;
