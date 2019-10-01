@@ -1,9 +1,9 @@
-import o from './src/runtime/osim-component-builder/o';
-import cc from './src/runtime/osim-component-builder/c';
-import ff from './src/runtime/osim-component-builder/f';
-import hh from './src/runtime/osim-component-builder/h';
-import ii from './src/runtime/osim-component-builder/i';
-import tt from './src/runtime/osim-component-builder/t';
-import mm from './src/runtime/modifiers/modifier-manager';
+import o_o from './src/runtime/osim-component-builder/o_o';
+import o_hh from './src/runtime/osim-component-builder/o_h';
+import o_cc from './src/runtime/osim-component-builder/o_c';
+import o_ff from './src/runtime/osim-component-builder/o_f';
+import o_ii from './src/runtime/osim-component-builder/o_i';
+import o_tt from './src/runtime/osim-component-builder/o_t';
+import o_mm from './src/runtime/modifiers/modifier-manager';
 
-export { o, cc, ff, hh, ii, tt, mm };
+export { o_o, o_cc, o_ff, o_hh, o_ii, o_tt, o_mm };

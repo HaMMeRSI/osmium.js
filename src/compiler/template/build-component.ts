@@ -1,56 +1,72 @@
-import { matchModifierName, matchFullModifierName } from '../../runtime/consts/regexes';
+import { matchModifierName, matchRuntimeName, matchFullRuntimeName } from '../../runtime/consts/regexes';
 import { IHast } from '../compiler-interfaces';
-import { OSIM_UID, RUNTIME_PH } from './consts';
+import { OSIM_UID } from './consts';
+import { extractConditionModifiers } from './jast';
+import { IHastAttribute } from '../../common/interfaces';
+import { extractModifierName } from './match';
 
-function replaceRunTime(text) {
-	return text.replace(new RegExp(RUNTIME_PH, 'g'), '"+iterationModifierName+"');
+function escapeRuntime(text) {
+	return `\`${text}\``;
 }
 
-function parseAttrs(attrs = []): string {
-	return replaceRunTime(JSON.stringify(attrs.map(({ name, value }): string[] => [name, value])));
+function extractRuntime(runtime: string) {
+	if (matchFullRuntimeName.test(runtime)) {
+		if (runtime.startsWith('$')) {
+			return runtime.match(matchRuntimeName)[0];
+		} else {
+			return escapeRuntime(runtime);
+		}
+	}
+
+	return `'${runtime}'`;
 }
 
-function handleOsimCondition(node: IHast, childrens, conditionAttr) {
+function parseAttrs(attrs: IHastAttribute[] = []): string {
+	return `[${attrs.map(({ name, value }) => `["${name}", ${extractRuntime(value)}]`)}]`;
+}
+
+function handleOsimCondition(node: IHast, childrens, conditionAttr: IHastAttribute) {
 	const osimUid = node.attrs.find((attr): boolean => attr.name === OSIM_UID);
 
-	const fullModifierNameForCondition = conditionAttr.value.match(matchFullModifierName);
-	const usedModifiers = fullModifierNameForCondition
-		? Array.from(new Set(fullModifierNameForCondition.map((x) => (x === RUNTIME_PH ? 'iterationModifierName' : `'${x.match(matchModifierName)[0]}'`)))).join(',')
-		: '';
-
-	const newIf = fullModifierNameForCondition.reduce((acc, modifier) => {
-		if (modifier === RUNTIME_PH) {
-			return acc.replace(RUNTIME_PH, `getModifier(iterationModifierName)`);
+	const condition = extractModifierName(matchModifierName, conditionAttr.value);
+	const modifierNames = extractConditionModifiers(condition.replace(matchFullRuntimeName, '"$1"'));
+	const newIf = modifierNames.reduce((acc, fullModifierName) => {
+		const runtimeNameMatch = fullModifierName.match(matchRuntimeName);
+		let modifierName = `getModel('${fullModifierName}')`;
+		if (runtimeNameMatch) {
+			modifierName = runtimeNameMatch[0];
 		}
 
-		const modifierName = modifier.match(matchModifierName)[0];
-		return acc.replace(modifier, `getModifier('${modifierName}')`);
-	}, conditionAttr.value);
-	const evaluationFunc = `(getModifier)=>(${newIf})?[${childrens.join(',')}]:null`;
-	return `i([${usedModifiers}],'${osimUid.value}',${evaluationFunc})`;
+		return acc.replace(fullModifierName, `${modifierName}`);
+	}, condition);
+
+	const evaluationFunc = `(getModel)=>(${newIf})?[${childrens.join(',')}]:null`;
+	return `o_i([${Array.from(new Set(modifierNames)).map(extractRuntime)}],'${osimUid.value}',${evaluationFunc})`;
 }
 
 function handleOsimLoop(node: IHast, childrens) {
 	const osimUid = node.attrs.find((attr): boolean => attr.name === OSIM_UID);
-	const forAttr = node.attrs.find((attr) => attr.name === 'for');
-	const modifierName = forAttr.value.match(matchModifierName)[0];
+	const loopKey = node.attrs.find((attr) => attr.name === 'loopKey').value;
+	const loopValue = node.attrs.find((attr) => attr.name === 'loopValue').value;
+	const loopItem = extractRuntime(node.attrs.find((attr) => attr.name === 'loopItem').value);
 	const childrensString = childrens.join(',');
-	const onodeGen = `(iterationModifierName)=>[${childrensString}]`;
-	return `f(['${modifierName}'],'${osimUid.value}','${modifierName}',${onodeGen})`;
+	const onodeGen = `(${loopKey}, ${loopValue})=>[${childrensString}]`;
+	return `o_f(${loopItem},'${osimUid.value}',${onodeGen})`;
 }
 
 function componentBuilder(node: IHast): string {
 	if (node.nodeName === '#text') {
-		const text = JSON.stringify(node.value);
-		if (!/^"(?:\\n|\\r|\\t)+"$/g.test(text)) {
-			return `t(${replaceRunTime(text)})`;
+		const escapedText = JSON.stringify(node.value).slice(1, -1);
+		if (!/^[\\n\\r\\t]+$/g.test(escapedText)) {
+			const text = `\`${escapedText}\``;
+			return `o_t(${text})`;
 		}
 
 		return null;
 	}
 
 	if (!node.childNodes || node.childNodes.length === 0) {
-		return `h('${node.nodeName}',${parseAttrs(node.attrs)})`;
+		return `o_h('${node.nodeName}',${parseAttrs(node.attrs)})`;
 	}
 
 	const childrens: string[] = node.childNodes.map((child): string => componentBuilder(child)).filter((child) => !!child);
@@ -66,14 +82,14 @@ function componentBuilder(node: IHast): string {
 
 	const osimUid = node.attrs && node.attrs.find((attr): boolean => attr.name === OSIM_UID);
 	if (osimUid) {
-		return `c('${node.nodeName}',${parseAttrs(node.attrs)},[${childrens.join(',')}])`;
+		return `o_c('${node.nodeName}',${parseAttrs(node.attrs)},[${childrens.join(',')}])`;
 	} else if (node.nodeName === '#document-fragment') {
 		return `[${childrens.join(',')}]`;
 	}
 
-	return `h('${node.nodeName}',${parseAttrs(node.attrs)},[${childrens.join(',')}])`;
+	return `o_h('${node.nodeName}',${parseAttrs(node.attrs)},[${childrens.join(',')}])`;
 }
 
 export default (hast: IHast): string => {
-	return `o(${componentBuilder(hast)})`;
+	return `o_o(${componentBuilder(hast)})`;
 };

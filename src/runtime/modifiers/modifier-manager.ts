@@ -22,6 +22,10 @@ export default (): IModifierManager => {
 
 	return {
 		modifiers,
+		getModel(scopedModifierAccessorName: string) {
+			const [componentUid, modifierAccessorName] = scopedModifierAccessorName.split(componentScopeDelimiter);
+			return resolveObjectKey(modifierAccessorName, modelCollection.get(componentUid));
+		},
 		getModifier(scopedModifierAccessorName: string) {
 			const [componentUid, modifierAccessorName] = scopedModifierAccessorName.split(componentScopeDelimiter);
 			return resolveObjectKey(modifierAccessorName, modifiers[componentUid]);
@@ -41,7 +45,7 @@ export default (): IModifierManager => {
 					currEffect[key] = createBaseEffect();
 				}
 
-				if (currModel) {
+				if (currModel !== undefined) {
 					currModel = currModel[key];
 				}
 
@@ -70,7 +74,7 @@ export default (): IModifierManager => {
 					currEffect[key] = createBaseEffect();
 				}
 
-				if (currModel) {
+				if (currModel !== undefined) {
 					currModel = currModel[key];
 				}
 				return currEffect[key];

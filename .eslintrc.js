@@ -19,6 +19,7 @@ module.exports = {
 		'@typescript-eslint/interface-name-prefix': [1, 'always'],
 		'@typescript-eslint/prefer-interface': 0,
 		'@typescript-eslint/explicit-function-return-type': 0,
+		'@typescript-eslint/camelcase': 0,
 		'linebreak-style': 0,
 		'no-tabs': 0,
 		'require-jsdoc': 0,

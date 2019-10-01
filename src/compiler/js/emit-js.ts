@@ -9,21 +9,21 @@ function getOsimScriptPath(currPath) {
 }
 
 function buildOsimEntry(osimComponents: OsimDocuments, output: string): void {
-	const collapsedHast: IHast = collapseOsimDocument(osimComponents);
-	const componentString = buildComponent(collapsedHast);
+	const hast: IHast = collapseOsimDocument(osimComponents);
+	const componentString = buildComponent(hast);
 
 	const importStrings = [];
 	for (const [name, value] of Object.entries(osimComponents)) {
 		// TODO: if no (../) then no (./) as well, check it?..
 		importStrings.push(`import ${name} from './${getOsimScriptPath(value.path).replace(/\\/g, '/')}';`);
 	}
-	importStrings.push("import { o } from 'osim';");
-	importStrings.push("import { cc } from 'osim';");
-	importStrings.push("import { hh } from 'osim';");
-	importStrings.push("import { tt } from 'osim';");
-	importStrings.push("import { ii } from 'osim';");
-	importStrings.push("import { ff } from 'osim';");
-	importStrings.push("import { mm } from 'osim';");
+	importStrings.push("import { o_o } from 'osim';");
+	importStrings.push("import { o_cc } from 'osim';");
+	importStrings.push("import { o_hh } from 'osim';");
+	importStrings.push("import { o_tt } from 'osim';");
+	importStrings.push("import { o_ii } from 'osim';");
+	importStrings.push("import { o_ff } from 'osim';");
+	importStrings.push("import { o_mm } from 'osim';");
 
 	const entryFile = `${importStrings.join('\n')}
 
@@ -31,12 +31,12 @@ export default (options) => {
 	const funcs = {
 		${Object.values(Object.keys(osimComponents).map((name): string => name)).join(',\n\t\t')},
 	};
-	const modifierManager = mm();
-	const c = cc(modifierManager);
-	const h = hh(modifierManager);
-	const t = tt(modifierManager);
-	const i = ii(funcs, modifierManager);
-	const f = ff(funcs, modifierManager);
+	const modifierManager = o_mm();
+	const o_h = o_hh(modifierManager);
+	const o_c = o_cc(modifierManager);
+	const o_t = o_tt(modifierManager);
+	const o_f = o_ff(funcs, modifierManager);
+	const o_i = o_ii(funcs, modifierManager);
 
 	const target = document.getElementById(options.target);
 	const osim = ${componentString}(target,funcs,modifierManager);

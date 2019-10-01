@@ -1,70 +1,92 @@
+import * as parse5 from 'parse5';
+import * as acorn from 'acorn';
 import { OsimDocuments, IHast, IResolvedProps } from '../compiler-interfaces';
 import { IOsimDocument, IHastObjectAttributes } from '../compiler-interfaces';
-import * as parse5 from 'parse5';
-import { matchModifierName, matchFullModifierName, getSpecificMatchFullModifierName } from '../../runtime/consts/regexes';
+import { matchModifierName, matchFullModifierName } from '../../runtime/consts/regexes';
 import { componentScopeDelimiter } from '../../common/consts';
 import { IHastAttribute } from '../../common/interfaces';
-import { RUNTIME_PH, OSIM_UID } from './consts';
+import { OSIM_UID } from './consts';
+import { parseJast, extractLoopItems } from './jast';
+import { extractModifierName } from './match';
 
 let idRunner = 0;
 function getId() {
 	return idRunner++;
 }
 
+function resolveModifierName(modifierAccessorName, runtimeModifiers, parentProps, componentScope): string {
+	const splittedModifierName = modifierAccessorName.split('.');
+	const modifierName = splittedModifierName[0];
+	let newModifier = `${componentScope}${componentScopeDelimiter}${modifierAccessorName}`;
+
+	if (modifierName in parentProps.staticProps) {
+		return parentProps.staticProps[modifierName].value;
+	} else if (runtimeModifiers.includes(modifierName)) {
+		// splittedModifierName[0] = RUNTIME_PH;
+		// newModifier = splittedModifierName.join('.');
+		newModifier = `\${${modifierAccessorName}}`;
+	} else if (modifierName in parentProps.dynamicProps) {
+		const { componentScope: actualComponentScope, value } = parentProps.dynamicProps[modifierName];
+		newModifier = `${actualComponentScope}${componentScopeDelimiter}${value}`;
+	}
+
+	return newModifier;
+}
+
 function resolveDomNodeModifiers(hastNode: IHast, parentProps: IResolvedProps, componentScope: string, runtimeModifiers: string[]) {
 	const domModifiers: Set<string> = new Set();
+	const parse = parseJast((modifierName) => resolveModifierName(modifierName, runtimeModifiers, parentProps, componentScope));
+	function handleForAttr({ value }, runtimeModifiers: string[]) {
+		const { params, loopItem } = extractLoopItems(extractModifierName(matchModifierName, value));
+		const jastProgram: any = acorn.parse(loopItem);
+		runtimeModifiers.push(...params);
+		return [{ name: 'loopKey', value: params[0] }, { name: 'loopValue', value: params[1] }, { name: 'loopItem', value: parse(jastProgram.body[0]) }];
+	}
 
+	const addAttrs = [];
 	hastNode.attrs.forEach((attr): void => {
-		const modifierAccessorNames = attr.value.match(matchModifierName);
-
-		if (modifierAccessorNames) {
-			for (const modifierAccessorName of modifierAccessorNames) {
-				const modifierName = modifierAccessorName.split('.')[0];
-
-				if (runtimeModifiers.includes(modifierName)) {
-					attr.value = attr.value.replace(new RegExp(`{{${modifierName}}}`, 'g'), RUNTIME_PH);
-				} else if (modifierName in parentProps.staticProps) {
-					attr.value = parentProps.staticProps[modifierName].value;
-				} else if (modifierName in parentProps.dynamicProps) {
-					const { componentScope, value } = parentProps.dynamicProps[modifierName];
-					attr.value = attr.value.replace(modifierName, `${componentScope}${componentScopeDelimiter}${value}`);
+		const modifierAccessorNameArr = attr.value.match(matchModifierName);
+		if (modifierAccessorNameArr) {
+			try {
+				const modifierAccessorName = modifierAccessorNameArr[0];
+				const jastProgram: any = acorn.parse(modifierAccessorName);
+				if (attr.name === 'for') {
+					addAttrs.push(...handleForAttr(attr, runtimeModifiers));
 				} else {
-					const newModifier = `${componentScope}${componentScopeDelimiter}${modifierAccessorName}`;
-					attr.value = attr.value.replace(modifierAccessorName, newModifier);
-					domModifiers.add(newModifier.split('.')[0]);
+					const parseResult: string = parse(jastProgram.body[0]);
+					if (parseResult.startsWith('${')) {
+						attr.value = parseResult;
+					} else {
+						attr.value = `{{${parseResult}}}`;
+					}
 				}
+			} catch (e) {
+				throw new Error(`invalid modifier: [${attr.name}, ${attr.value}]`);
 			}
 		}
 	});
+
+	hastNode.attrs.push(...addAttrs);
 
 	return domModifiers;
 }
 
 function resolveTextNodeModifiers(hastNode: IHast, parentProps: IResolvedProps, componentScope: string, runtimeModifiers: string[]) {
 	const textModifiers: Set<string> = new Set();
-	const fullModifierAccessorNames = hastNode.value.match(matchFullModifierName);
+	const fullScopedModifierAccessors = hastNode.value.match(matchFullModifierName);
 
-	if (fullModifierAccessorNames) {
-		for (const fullModifierAccessor of fullModifierAccessorNames) {
-			const fullModifierAccessorName = fullModifierAccessor.match(matchModifierName)[0];
-			const modifierName = fullModifierAccessorName.split('.')[0];
-
-			if (runtimeModifiers.includes(fullModifierAccessorName)) {
-				hastNode.value = hastNode.value.replace(new RegExp(fullModifierAccessorName, 'g'), RUNTIME_PH);
-			} else if (modifierName in parentProps.staticProps) {
-				hastNode.value = hastNode.value.replace(getSpecificMatchFullModifierName(fullModifierAccessorName), parentProps.staticProps[modifierName].value);
-			} else if (modifierName in parentProps.dynamicProps) {
-				const { componentScope, value } = parentProps.dynamicProps[modifierName];
-
-				hastNode.value = hastNode.value.replace(
-					getSpecificMatchFullModifierName(fullModifierAccessorName),
-					`{{${componentScope}${componentScopeDelimiter}${fullModifierAccessorName.replace(modifierName, value)}}}`
-				);
-			} else {
-				const newModifier = `${componentScope}${componentScopeDelimiter}${fullModifierAccessorName}`;
-				hastNode.value = hastNode.value.replace(getSpecificMatchFullModifierName(fullModifierAccessorName), `{{${newModifier}}}`);
-				textModifiers.add(newModifier.split('.')[0]);
+	if (fullScopedModifierAccessors) {
+		const parse = parseJast((modifierName) => resolveModifierName(modifierName, runtimeModifiers, parentProps, componentScope));
+		for (const fullModifierAccessor of fullScopedModifierAccessors) {
+			const modifierAccessorName = fullModifierAccessor.match(matchModifierName)[0];
+			const jastProgram: any = acorn.parse(modifierAccessorName);
+			const parseResult = parse(jastProgram.body[0]);
+			let resolvedModifier = `{{${parseResult}}}`;
+			if (parseResult.startsWith('${')) {
+				resolvedModifier = parseResult;
 			}
+
+			hastNode.value = hastNode.value.replace(fullModifierAccessor, resolvedModifier);
 		}
 	}
 
@@ -76,12 +98,12 @@ function createPropsForChild(attrs: IHastAttribute[]): IResolvedProps {
 	const dynamicProps: IHastObjectAttributes = {};
 
 	for (const { name, value } of attrs) {
-		const dynamicName = value.match(matchModifierName);
+		const scopedModifierAccessorName = value.match(matchModifierName);
 
-		if (dynamicName) {
-			const [modifierComponentScope, modifier] = dynamicName[0].split(componentScopeDelimiter);
+		if (scopedModifierAccessorName) {
+			const [componentScope, modifier] = scopedModifierAccessorName[0].split(componentScopeDelimiter);
 			dynamicProps[name] = {
-				componentScope: modifierComponentScope,
+				componentScope: componentScope,
 				value: modifier,
 			};
 		} else {
@@ -106,10 +128,9 @@ function collapseOsimDocument(osimComponents: OsimDocuments): IHast {
 			}
 
 			reolveModifierFunction(child, props, componentUid, runtimeModifiers);
-
 			if (currentOsimDocument.components.includes(child.nodeName)) {
 				const newComponentUid = `${child.nodeName}${getId()}`;
-				const modedHast = collapseHast(
+				const hast = collapseHast(
 					osimComponents[child.nodeName],
 					parse5.parseFragment(osimComponents[child.nodeName].html),
 					createPropsForChild(child.attrs),
@@ -118,18 +139,10 @@ function collapseOsimDocument(osimComponents: OsimDocuments): IHast {
 				);
 
 				child.attrs.push({ name: OSIM_UID, value: newComponentUid });
-				child.childNodes = modedHast.childNodes;
+				child.childNodes = hast.childNodes;
 			} else if (child.childNodes && child.childNodes.length > 0) {
 				if (child.nodeName === 'osim') {
 					child.attrs.push({ name: OSIM_UID, value: `${child.nodeName}${getId()}` });
-					const loopIndex = child.attrs.find((attr) => attr.name === 'index');
-					const loopvalue = child.attrs.find((attr) => attr.name === 'value');
-					if (loopIndex) {
-						runtimeModifiers.push(loopIndex.value);
-					}
-					if (loopvalue) {
-						runtimeModifiers.push(loopvalue.value);
-					}
 				}
 
 				collapseHast(currentOsimDocument, child, props, componentUid, runtimeModifiers);

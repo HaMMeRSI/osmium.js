@@ -6,8 +6,6 @@
 		"outDir": "lib",
 		"sourceMap": true,
 		"alwaysStrict": true,
-		"esModuleInterop": true,
-		"allowSyntheticDefaultImports": true,
 		"incremental": true,
 		"typeRoots": ["./node_modules/@types/"],
 		"isolatedModules": true,

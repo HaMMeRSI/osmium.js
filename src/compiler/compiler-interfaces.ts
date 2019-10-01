@@ -37,3 +37,8 @@ export interface IHast {
 	childNodes: IHast[];
 	value?: string;
 }
+
+export interface ILoopItems {
+	params: string[];
+	loopItem: string;
+}
