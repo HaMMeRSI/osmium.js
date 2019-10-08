@@ -1,96 +1,35 @@
 import * as parse5 from 'parse5';
-import * as acorn from 'acorn';
-import { OsimDocuments, IHast, IResolvedProps } from '../compiler-interfaces';
+import { OsimDocuments, IHast, IResolvedProps, IHastModifiers } from '../compiler-interfaces';
 import { IOsimDocument, IHastObjectAttributes } from '../compiler-interfaces';
 import { matchModifierName, matchFullModifierName } from '../../runtime/consts/regexes';
 import { componentScopeDelimiter } from '../../common/consts';
 import { IHastAttribute } from '../../common/interfaces';
 import { OSIM_UID } from './consts';
-import { parseJast, extractLoopItems } from './jast';
-import { extractModifierName } from './match';
+import { parseModifiersForText, parseModifiersForLoop, parseModifiersForAttr, parseModifiersForCondition, parseModifiersForFunc } from './hast-modifiers';
+import { initRuntimeModifiers, IRuntimeModifiers } from './runtimeModifiers';
 
 let idRunner = 0;
 function getId() {
 	return idRunner++;
 }
 
-function resolveModifierName(modifierAccessorName, runtimeModifiers, parentProps, componentScope): string {
-	const splittedModifierName = modifierAccessorName.split('.');
-	const modifierName = splittedModifierName[0];
-	let newModifier = `${componentScope}${componentScopeDelimiter}${modifierAccessorName}`;
-
-	if (modifierName in parentProps.staticProps) {
-		return parentProps.staticProps[modifierName].value;
-	} else if (runtimeModifiers.includes(modifierName)) {
-		// splittedModifierName[0] = RUNTIME_PH;
-		// newModifier = splittedModifierName.join('.');
-		newModifier = `\${${modifierAccessorName}}`;
-	} else if (modifierName in parentProps.dynamicProps) {
-		const { componentScope: actualComponentScope, value } = parentProps.dynamicProps[modifierName];
-		newModifier = `${actualComponentScope}${componentScopeDelimiter}${value}`;
-	}
-
-	return newModifier;
-}
-
-function resolveDomNodeModifiers(hastNode: IHast, parentProps: IResolvedProps, componentScope: string, runtimeModifiers: string[]) {
-	const domModifiers: Set<string> = new Set();
-	const parse = parseJast((modifierName) => resolveModifierName(modifierName, runtimeModifiers, parentProps, componentScope));
-	function handleForAttr({ value }, runtimeModifiers: string[]) {
-		const { params, loopItem } = extractLoopItems(extractModifierName(matchModifierName, value));
-		const jastProgram: any = acorn.parse(loopItem);
-		runtimeModifiers.push(...params);
-		return [{ name: 'loopKey', value: params[0] }, { name: 'loopValue', value: params[1] }, { name: 'loopItem', value: parse(jastProgram.body[0]) }];
-	}
-
-	const addAttrs = [];
-	hastNode.attrs.forEach((attr): void => {
-		const modifierAccessorNameArr = attr.value.match(matchModifierName);
-		if (modifierAccessorNameArr) {
-			try {
-				const modifierAccessorName = modifierAccessorNameArr[0];
-				const jastProgram: any = acorn.parse(modifierAccessorName);
-				if (attr.name === 'for') {
-					addAttrs.push(...handleForAttr(attr, runtimeModifiers));
-				} else {
-					const parseResult: string = parse(jastProgram.body[0]);
-					if (parseResult.startsWith('${')) {
-						attr.value = parseResult;
-					} else {
-						attr.value = `{{${parseResult}}}`;
-					}
-				}
-			} catch (e) {
-				throw new Error(`invalid modifier: [${attr.name}, ${attr.value}]`);
-			}
+function resolveDomNodeAttrs(hastNode: IHast, parentProps: IResolvedProps, componentScope: string, runtimeModifiers: IRuntimeModifiers): IHastModifiers {
+	return hastNode.attrs.reduce((acc: IHastModifiers, { name, value }) => {
+		if (name === 'for') {
+			return Object.assign({}, acc, parseModifiersForLoop(value, runtimeModifiers, parentProps, componentScope));
+		} else if (name === 'if') {
+			return Object.assign({}, acc, parseModifiersForCondition(value, runtimeModifiers, parentProps, componentScope));
+		} else if (name.startsWith('@')) {
+			return Object.assign({}, acc, parseModifiersForFunc(value, runtimeModifiers, parentProps, componentScope));
 		}
-	});
 
-	hastNode.attrs.push(...addAttrs);
-
-	return domModifiers;
+		return Object.assign({}, acc, parseModifiersForAttr(value, runtimeModifiers, parentProps, componentScope));
+	}, {});
 }
 
-function resolveTextNodeModifiers(hastNode: IHast, parentProps: IResolvedProps, componentScope: string, runtimeModifiers: string[]) {
-	const textModifiers: Set<string> = new Set();
+function resolveTextNodeModifiers(hastNode: IHast, parentProps: IResolvedProps, componentScope: string, runtimeModifiers: IRuntimeModifiers): IHastModifiers {
 	const fullScopedModifierAccessors = hastNode.value.match(matchFullModifierName);
-
-	if (fullScopedModifierAccessors) {
-		const parse = parseJast((modifierName) => resolveModifierName(modifierName, runtimeModifiers, parentProps, componentScope));
-		for (const fullModifierAccessor of fullScopedModifierAccessors) {
-			const modifierAccessorName = fullModifierAccessor.match(matchModifierName)[0];
-			const jastProgram: any = acorn.parse(modifierAccessorName);
-			const parseResult = parse(jastProgram.body[0]);
-			let resolvedModifier = `{{${parseResult}}}`;
-			if (parseResult.startsWith('${')) {
-				resolvedModifier = parseResult;
-			}
-
-			hastNode.value = hastNode.value.replace(fullModifierAccessor, resolvedModifier);
-		}
-	}
-
-	return textModifiers;
+	return parseModifiersForText(fullScopedModifierAccessors || [], runtimeModifiers, parentProps, componentScope);
 }
 
 function createPropsForChild(attrs: IHastAttribute[]): IResolvedProps {
@@ -120,14 +59,14 @@ function createPropsForChild(attrs: IHastAttribute[]): IResolvedProps {
 }
 
 function collapseOsimDocument(osimComponents: OsimDocuments): IHast {
-	function collapseHast(currentOsimDocument: IOsimDocument, activeHast: IHast, props: IResolvedProps, componentUid: string, runtimeModifiers: string[]): IHast {
+	function collapseHast(currentOsimDocument: IOsimDocument, activeHast: IHast, props: IResolvedProps, componentUid: string, runtimeModifiers: IRuntimeModifiers): IHast {
 		for (const child of activeHast.childNodes) {
-			let reolveModifierFunction = resolveDomNodeModifiers;
+			let reolveModifierFunction = resolveDomNodeAttrs;
 			if (child.nodeName === '#text') {
 				reolveModifierFunction = resolveTextNodeModifiers;
 			}
 
-			reolveModifierFunction(child, props, componentUid, runtimeModifiers);
+			child.modifiers = reolveModifierFunction(child, props, componentUid, runtimeModifiers);
 			if (currentOsimDocument.components.includes(child.nodeName)) {
 				const newComponentUid = `${child.nodeName}${getId()}`;
 				const hast = collapseHast(
@@ -160,7 +99,7 @@ function collapseOsimDocument(osimComponents: OsimDocuments): IHast {
 			staticProps: {},
 		},
 		'root',
-		[]
+		initRuntimeModifiers()
 	);
 }
 

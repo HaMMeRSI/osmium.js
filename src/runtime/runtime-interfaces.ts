@@ -41,4 +41,4 @@ export interface IOsimNode {
 }
 
 export type IOsimChilds = IOsimNode[];
-export type EvaluationFunction = (getModifier: (modifierName: string) => any) => IOsimChilds;
+export type EvaluationFunction = () => IOsimChilds;

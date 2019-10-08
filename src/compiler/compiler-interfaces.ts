@@ -31,8 +31,19 @@ export interface IResolvedProps {
 	dynamicProps: IHastObjectAttributes;
 }
 
+export interface IHastModifier {
+	scope?: string;
+	name: string;
+	type: number;
+}
+
+export interface IHastModifiers {
+	[modifierName: string]: IHastModifier;
+}
+
 export interface IHast {
 	nodeName: string;
+	modifiers: IHastModifiers;
 	attrs: IHastAttribute[];
 	childNodes: IHast[];
 	value?: string;

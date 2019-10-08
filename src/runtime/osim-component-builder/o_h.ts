@@ -1,4 +1,4 @@
-import { matchModifierName } from '../consts/regexes';
+import { matchModifierName, matchFuncCall } from '../consts/regexes';
 import { resolveObjectKey, getAccessorFromString } from '../helpers/objectFunctions';
 import { IModifierManager, IOsimChilds, IOsimNode, ModifierAction } from '../runtime-interfaces';
 import { OsimNode } from '../osim-node/OsimNode';
@@ -19,7 +19,7 @@ export default (modifierManager: IModifierManager) => (tagName: string = 'div', 
 		const modifierAccessorNameMatch: RegExpMatchArray = value.match(matchModifierName);
 
 		if (modifierAccessorNameMatch) {
-			const modifierAccessorName = modifierAccessorNameMatch[0];
+			let modifierAccessorName = modifierAccessorNameMatch[0];
 			let action: ModifierAction = (newAttrValue): void => {
 				if (typeof newAttrValue === 'object') {
 					updateDomAttr(dom, attrName, resolveObjectKey(getAccessorFromString(modifierAccessorName), newAttrValue));
@@ -33,7 +33,9 @@ export default (modifierManager: IModifierManager) => (tagName: string = 'div', 
 					// This test is because auto activate action
 					if (newAttrValue) {
 						// dom.removeEventListener(eventName, oldAttrValue);
-						const args = modifierAccessorName.split(':')[1].split(',');
+						const [, callee, strArgs] = matchFuncCall.exec(modifierAccessorName);
+						const args = strArgs.split(',');
+						modifierAccessorName = callee;
 						dom.addEventListener(attrName.slice(1), (e) => {
 							const nargs = args.map((arg) => {
 								const modifierNameMatch = arg.match(matchModifierName);
@@ -45,13 +47,14 @@ export default (modifierManager: IModifierManager) => (tagName: string = 'div', 
 									return arg;
 								}
 							});
+
 							newAttrValue.call(window, ...nargs);
 						});
 					}
 				};
 			}
 
-			hONode.addRemover(modifierManager.addAction(modifierAccessorName.split(':')[0], action));
+			hONode.addRemover(modifierManager.addAction(modifierAccessorName, action));
 		} else {
 			updateDomAttr(dom, attrName, value);
 		}

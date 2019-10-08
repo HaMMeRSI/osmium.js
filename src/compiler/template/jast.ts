@@ -3,26 +3,29 @@ import * as acorn from 'acorn';
 import { matchFullRuntimeName } from '../../runtime/consts/regexes';
 
 /* eslint-disable @typescript-eslint/no-use-before-define */
-export function buildModifierAccessor(jast) {
+function buildModifierAccessor(jast) {
 	if (jast.type === 'MemberExpression') {
 		return `${buildModifierAccessor(jast.object)}[${buildModifierAccessor(jast.property)}]`;
 	} else if (jast.type === 'Literal') {
 		return jast.raw;
+	} else if (jast.type === 'Identifier') {
+		return jast.name;
 	}
 
 	return jast.name;
 }
 
-export function extractLoopItems(loop): ILoopItems {
+export function extractLoopItems(loop: string): ILoopItems {
 	function extract(loopJast): ILoopItems {
 		if (loopJast.left.type === 'SequenceExpression') {
+			const [loopValue, loopKey] = loopJast.left.expressions.map((exper) => exper.name);
 			return {
-				params: loopJast.left.expressions.map((exper) => exper.name),
+				params: [loopValue, loopKey],
 				loopItem: loopJast.right.name,
 			};
 		}
 
-		return { params: [loopJast.left.name], loopItem: loopJast.right.name };
+		return { params: [loopJast.left.name, '_'], loopItem: loopJast.right.name };
 	}
 
 	const jast: any = acorn.parse(loop);
@@ -53,6 +56,15 @@ export function extractConditionModifiers(condition: string): string[] {
 	const exper: any = acorn.parse(condition);
 	const jast = exper.body[0];
 	return extract(jast);
+}
+
+export function extractFunctionItems(func: string) {
+	const exper: any = acorn.parse(func);
+	const jast = exper.body[0].expression;
+	return {
+		callee: buildModifierAccessor(jast.callee),
+		args: jast.arguments.map((arg) => buildModifierAccessor(arg)),
+	};
 }
 
 export function parseJast(resolveModifier) {

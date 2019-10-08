@@ -32,6 +32,7 @@ export default (options) => {
 		${Object.values(Object.keys(osimComponents).map((name): string => name)).join(',\n\t\t')},
 	};
 	const modifierManager = o_mm();
+	const o_gm = modifierManager.getModifier;
 	const o_h = o_hh(modifierManager);
 	const o_c = o_cc(modifierManager);
 	const o_t = o_tt(modifierManager);

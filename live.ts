@@ -8,9 +8,10 @@ const rootOsimComponent = `
 
 <template>
 	<div id="ewf#$fwef">
+		testText: {{someMod}}
 		<osim for="{{(item, i) in items}}">
 			<osim for="{{(key, j) in item}}">
-				<button name="{{key}}" id="wefwfe" @click="{{show(i)}}" class={{dssd}}>{{j}}</button>
+				<button name="{{key}}" id="wefwfe" @click="{{show(key,i)}}" class={{dssd}}>{{j}}</button>
 			</osim>
 			<osim if="{{item === 3 || item === 2 && items === 23}}">
 				efwe:{{item}}, {{items}}, {{i}}
