@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ComponentUid, IModifierManager, ModifierAction } from '../runtime-interfaces';
-import { resolveObjectKey } from '../helpers/objectFunctions';
+import { resolveObjectKey, splitObjectAccessor } from '../helpers/objectFunctions';
 import { componentScopeDelimiter } from '../../common/consts';
 import { createProxer } from './proxer';
 import { IEffect, createBaseEffect } from './effects';
@@ -39,7 +39,7 @@ export default (): IModifierManager => {
 				modelCollection.set(componentUid, Object.create(null));
 			}
 
-			const properties = modifierAccessorName.replace(/\[(.+)\]/g, '.$1').split('.');
+			const properties = splitObjectAccessor(modifierAccessorName.split('(')[0]);
 			const effect = properties.reduce((currEffect: IEffect, key: string) => {
 				if (!(key in currEffect)) {
 					currEffect[key] = createBaseEffect();
@@ -68,7 +68,7 @@ export default (): IModifierManager => {
 				modelCollection.set(componentUid, Object.create(null));
 			}
 
-			const properties = modifierAccessorName.replace(/\[(.+)\]/g, '.$1').split('.');
+			const properties = splitObjectAccessor(modifierAccessorName.split('(')[0]);
 			const effect = properties.reduce((currEffect: IEffect, key: string) => {
 				if (!(key in currEffect)) {
 					currEffect[key] = createBaseEffect();

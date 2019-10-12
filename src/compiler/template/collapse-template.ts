@@ -1,35 +1,38 @@
 import * as parse5 from 'parse5';
-import { OsimDocuments, IHast, IResolvedProps, IHastModifiers } from '../compiler-interfaces';
+import { OsimDocuments, IHast, IResolvedProps, IOastModifiers } from '../compiler-interfaces';
 import { IOsimDocument, IHastObjectAttributes } from '../compiler-interfaces';
-import { matchModifierName, matchFullModifierName } from '../../runtime/consts/regexes';
+import { matchModifierName } from '../../runtime/consts/regexes';
 import { componentScopeDelimiter } from '../../common/consts';
 import { IHastAttribute } from '../../common/interfaces';
 import { OSIM_UID } from './consts';
-import { parseModifiersForText, parseModifiersForLoop, parseModifiersForAttr, parseModifiersForCondition, parseModifiersForFunc } from './hast-modifiers';
 import { initRuntimeModifiers, IRuntimeModifiers } from './runtimeModifiers';
+import { oastBuilder, ENUM_OAST_TYPES } from './oast-builder';
+import { IOastBase } from '../oast-interfaces';
 
 let idRunner = 0;
 function getId() {
 	return idRunner++;
 }
 
-function resolveDomNodeAttrs(hastNode: IHast, parentProps: IResolvedProps, componentScope: string, runtimeModifiers: IRuntimeModifiers): IHastModifiers {
-	return hastNode.attrs.reduce((acc: IHastModifiers, { name, value }) => {
-		if (name === 'for') {
-			return Object.assign({}, acc, parseModifiersForLoop(value, runtimeModifiers, parentProps, componentScope));
-		} else if (name === 'if') {
-			return Object.assign({}, acc, parseModifiersForCondition(value, runtimeModifiers, parentProps, componentScope));
-		} else if (name.startsWith('@')) {
-			return Object.assign({}, acc, parseModifiersForFunc(value, runtimeModifiers, parentProps, componentScope));
+function getDomNodeOast(hastNode: IHast, parentProps: IResolvedProps, componentScope: string, runtimeModifiers: IRuntimeModifiers): IOastBase[] {
+	const builder = oastBuilder(runtimeModifiers, parentProps, componentScope);
+	return hastNode.attrs.map((attr) => {
+		if (attr.name === 'for') {
+			return builder.build(ENUM_OAST_TYPES.LoopStatement, attr.name, attr.value);
+		} else if (attr.name === 'if') {
+			return builder.build(ENUM_OAST_TYPES.ConditionStatement, attr.name, attr.value);
+		} else if (attr.name.startsWith('@')) {
+			return builder.build(ENUM_OAST_TYPES.CallExpression, attr.name, attr.value);
 		}
 
-		return Object.assign({}, acc, parseModifiersForAttr(value, runtimeModifiers, parentProps, componentScope));
-	}, {});
+		return builder.build(ENUM_OAST_TYPES.TextExpression, attr.name, attr.value);
+	});
 }
 
-function resolveTextNodeModifiers(hastNode: IHast, parentProps: IResolvedProps, componentScope: string, runtimeModifiers: IRuntimeModifiers): IHastModifiers {
-	const fullScopedModifierAccessors = hastNode.value.match(matchFullModifierName);
-	return parseModifiersForText(fullScopedModifierAccessors || [], runtimeModifiers, parentProps, componentScope);
+function getTextNodeOast(hastNode: IHast, parentProps: IResolvedProps, componentScope: string, runtimeModifiers: IRuntimeModifiers): IOastBase[] {
+	const builder = oastBuilder(runtimeModifiers, parentProps, componentScope);
+	// const fullScopedModifierAccessors = hastNode.value.match(matchFullModifierName);
+	return [builder.build(ENUM_OAST_TYPES.TextExpression, 'text', hastNode.value)];
 }
 
 function createPropsForChild(attrs: IHastAttribute[]): IResolvedProps {
@@ -61,12 +64,12 @@ function createPropsForChild(attrs: IHastAttribute[]): IResolvedProps {
 function collapseOsimDocument(osimComponents: OsimDocuments): IHast {
 	function collapseHast(currentOsimDocument: IOsimDocument, activeHast: IHast, props: IResolvedProps, componentUid: string, runtimeModifiers: IRuntimeModifiers): IHast {
 		for (const child of activeHast.childNodes) {
-			let reolveModifierFunction = resolveDomNodeAttrs;
+			let reolveModifierFunction = getDomNodeOast;
 			if (child.nodeName === '#text') {
-				reolveModifierFunction = resolveTextNodeModifiers;
+				reolveModifierFunction = getTextNodeOast;
 			}
 
-			child.modifiers = reolveModifierFunction(child, props, componentUid, runtimeModifiers);
+			child.oast = reolveModifierFunction(child, props, componentUid, runtimeModifiers);
 			if (currentOsimDocument.components.includes(child.nodeName)) {
 				const newComponentUid = `${child.nodeName}${getId()}`;
 				const hast = collapseHast(

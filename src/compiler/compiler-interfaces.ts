@@ -1,4 +1,6 @@
+import { ENUM_OAST_TYPES } from './template/oast-builder';
 import { IHastAttribute } from '../common/interfaces';
+import { IOastBase, IMemberExpression, ILiteral } from './oast-interfaces';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export type OsimDocuments = { [name: string]: IOsimDocument };
@@ -31,19 +33,19 @@ export interface IResolvedProps {
 	dynamicProps: IHastObjectAttributes;
 }
 
-export interface IHastModifier {
-	scope?: string;
-	name: string;
-	type: number;
+export interface IOastModifier {
+	scope: string;
+	value: string;
+	type: ENUM_OAST_TYPES;
 }
 
-export interface IHastModifiers {
-	[modifierName: string]: IHastModifier;
+export interface IOastModifiers {
+	[modifierName: string]: IOastModifier;
 }
 
 export interface IHast {
 	nodeName: string;
-	modifiers: IHastModifiers;
+	oast: IOastBase[];
 	attrs: IHastAttribute[];
 	childNodes: IHast[];
 	value?: string;
@@ -51,5 +53,5 @@ export interface IHast {
 
 export interface ILoopItems {
 	params: string[];
-	loopItem: string;
+	loopItem: IMemberExpression | ILiteral | IOastModifier;
 }

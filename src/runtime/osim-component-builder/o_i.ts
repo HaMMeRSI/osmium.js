@@ -1,11 +1,14 @@
 import { IOsimNode, IModifierManager, ComponentFuncs, EvaluationFunction } from '../runtime-interfaces';
 import { OsimBuiltinNode } from '../osim-node/OsimBuiltinNode';
+import { extractModifierName } from '../../compiler/template/match';
+import { matchModifierName } from '../consts/regexes';
 
 export default (componentFuncs: ComponentFuncs, modifiersManager: IModifierManager) => (
 	usedScopedModifierNames: string[],
 	uid: string,
 	builtinFunction: EvaluationFunction
 ): IOsimNode => {
+	usedScopedModifierNames = usedScopedModifierNames.map((m) => extractModifierName(matchModifierName, m));
 	return new OsimBuiltinNode(uid, usedScopedModifierNames, (oNode: OsimBuiltinNode) => {
 		const evaluatedONodes = builtinFunction();
 

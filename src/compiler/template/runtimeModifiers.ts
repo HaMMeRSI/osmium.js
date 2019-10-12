@@ -1,26 +1,27 @@
-import { IHastModifier } from '../compiler-interfaces';
-import { ENUM_MODIFIERS_TYPE } from './hast-modifiers';
+import { IOastModifier } from '../compiler-interfaces';
+import { ENUM_OAST_TYPES } from './oast-builder';
 
 export interface IRuntimeModifiers {
-	add: (name: string, type: ENUM_MODIFIERS_TYPE) => IHastModifier;
-	find: (name: string) => IHastModifier;
+	add: (name: string, scope: string, type: ENUM_OAST_TYPES) => string;
+	find: (name: string) => IOastModifier;
 }
 export function initRuntimeModifiers(): IRuntimeModifiers {
-	const hastRuntimeModifiers: IHastModifier[] = [];
+	const hastRuntimeModifiers: IOastModifier[] = [];
 
 	return {
-		add(name: string, type) {
-			const hastModifer = {
-				name,
+		add(value, scope, type) {
+			const hastModifer: IOastModifier = {
+				value,
 				type,
+				scope,
 			};
 
 			hastRuntimeModifiers.push(hastModifer);
 
-			return hastModifer;
+			return value;
 		},
 		find(name) {
-			return hastRuntimeModifiers.find((runtime) => runtime.name.indexOf(name) !== -1);
+			return hastRuntimeModifiers.find((runtime) => runtime.value.indexOf(name) !== -1);
 		},
 	};
 }
