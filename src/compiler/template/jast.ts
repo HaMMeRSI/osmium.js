@@ -82,13 +82,13 @@ export function extractFunctionItems(func: string, identifierResolver: Identifie
 	let callee = exper.callee;
 	let args = [];
 	if (exper.type === 'Identifier') {
-		callee = exper.name;
+		callee = identifierResolver(exper.name);
 	} else if (exper.type === 'MemberExpression') {
 		callee = buildModifierAccessor(exper, identifierResolver);
+	} else {
+		callee = identifierResolver(callee.name);
+		args = exper.arguments.map((arg) => buildModifierAccessor(arg, identifierResolver));
 	}
-
-	callee = identifierResolver(callee.name);
-	args = exper.arguments.map((arg) => buildModifierAccessor(arg, identifierResolver));
 
 	return {
 		callee,

@@ -9,3 +9,4 @@ export const matchFullRuntimeName = /(\${.+?})/g;
 // export const matchFullRuntimeName = /(\+.+?\+)/;
 export const getSpecificMatchFullModifierName = (name): RegExp => new RegExp(`{{ ?${name} ?}}`, 'g');
 export const matchFuncCall = /(.+?)\((.+)?\)/;
+export const matchPrefixAttr = /^([@:])?(.+)/;

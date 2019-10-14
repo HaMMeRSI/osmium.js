@@ -4,11 +4,27 @@ import { parseRootDocument } from './src/compiler/osim-file-parser';
 import { emitJsFiles } from './src/compiler/js/emit-js';
 const rootOsimComponent = `
 <components>
+	import c1 from './components/osim3-component.om';
 </components>
 
 <template>
-	<div id="ewf#$fwef">
-		testText: {{someMod.a.b}}<br/>
+	<osim for="(item, i) in items">
+		<c1 todo="{{item}}" @ondelete="{{deleteItem(index)}}"></c1>
+	</osim>
+</template>
+
+<script>
+	export default (modifiers) => {
+	}
+</script>`;
+const rootComponentSrcPath = path.resolve(process.cwd(), './src/root.js');
+const osimOutputPath = path.resolve(process.cwd(), './osimOutput');
+
+const osimComponents: OsimDocuments = parseRootDocument(rootOsimComponent, rootComponentSrcPath);
+emitJsFiles(osimComponents, osimOutputPath);
+//	import c1 from './components/osim3-component.om';
+/*
+	testText: {{someMod.a.b}}<br/>
 		<button  @click="{{showawa($event)}}">te</button>
 		<osim for="(item, i) in items">
 			<osim if="wer.a === 3">
@@ -27,22 +43,4 @@ const rootOsimComponent = `
 			<osim if="item.a === 3 || item === 2 && items === 23">
 				efwe:{{item}}, {{items}}, {{i}}
 			</osim>
-		</osim>
-	</div>
-</template>
-
-<script>
-	export default (modifiers) => {
-		modifiers.someMod = 'smemd';
-		modifiers.items = [1,2,3];
-		modifiers.show = (item) => {
-			console.log(item);
-		}
-	}
-</script>`;
-const rootComponentSrcPath = path.resolve(process.cwd(), './src/root.js');
-const osimOutputPath = path.resolve(process.cwd(), './osimOutput');
-
-const osimComponents: OsimDocuments = parseRootDocument(rootOsimComponent, rootComponentSrcPath);
-emitJsFiles(osimComponents, osimOutputPath);
-//	import c1 from './components/osim3-component.om';
+		</osim>*/

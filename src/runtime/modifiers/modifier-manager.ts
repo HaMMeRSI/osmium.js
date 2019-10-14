@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ComponentUid, IModifierManager, ModifierAction } from '../runtime-interfaces';
-import { resolveObjectKey, splitObjectAccessor } from '../helpers/objectFunctions';
+import { resolveObjectKey, splitObjectAccessor, assignByPath } from '../helpers/objectFunctions';
 import { componentScopeDelimiter } from '../../common/consts';
 import { createProxer } from './proxer';
 import { IEffect, createBaseEffect } from './effects';
@@ -29,6 +29,10 @@ export default (): IModifierManager => {
 		getModifier(scopedModifierAccessorName: string) {
 			const [componentUid, modifierAccessorName] = scopedModifierAccessorName.split(componentScopeDelimiter);
 			return resolveObjectKey(modifierAccessorName, modifiers[componentUid]);
+		},
+		setModifier(scopedModifierAccessorName: string, value) {
+			const [componentUid, modifierAccessorName] = scopedModifierAccessorName.split(componentScopeDelimiter);
+			return assignByPath(modifiers[componentUid], modifierAccessorName, value);
 		},
 		addAction(modifierName: string, modifierAction: ModifierAction) {
 			const [componentUid, modifierAccessorName] = modifierName.split('_');

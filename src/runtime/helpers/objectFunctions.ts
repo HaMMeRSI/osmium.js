@@ -10,18 +10,14 @@ export const resolveObjectKey = (path: string, obj, separator = '.') => {
 	return properties.reduce((prev, curr) => prev && prev[curr], obj);
 };
 
-export const assignByPath = (path, value, root) => {
-	const segments = path.split('.');
-	let cursor = root || window;
-	let segment;
-	let i;
-
-	for (i = 0; i < segments.length - 1; ++i) {
-		segment = segments[i];
-		cursor = cursor[segment] = cursor[segment] || {};
+export const assignByPath = (root, path, value) => {
+	const brokenPath = splitObjectAccessor(path);
+	const lastKey = brokenPath[brokenPath.length - 1];
+	for (let i = 0; i < brokenPath.length - 1; i++) {
+		root = root[brokenPath[i]];
 	}
 
-	return (cursor[segments[i]] = value);
+	root[lastKey] = value;
 };
 
 export const getAccessorFromString = (path: string) => {

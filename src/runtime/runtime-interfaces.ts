@@ -17,6 +17,7 @@ export interface IModifierManager {
 	modifiers: Record<ComponentUid, any>;
 	getModel(scopedModifierAccessorName: string);
 	getModifier: (modifierName: string) => any;
+	setModifier(scopedModifierAccessorName: string, value): void;
 	addAction(path: string, modifierActions: ModifierAction);
 	addListener(modifierName, func, getProps?);
 	removeComponent(compinentUid: ComponentUid);

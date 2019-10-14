@@ -28,8 +28,8 @@ export function createProxer(model, effects) {
 			model[prop] = value;
 
 			if (prop in effects) {
-				callAllEffects(model[prop], effects[prop]);
 				initAllEffects(model[prop], effects[prop]);
+				callAllEffects(model[prop], effects[prop]);
 			} else {
 				effects[prop] = createBaseEffect();
 				initAllEffects(model[prop], effects[prop]);

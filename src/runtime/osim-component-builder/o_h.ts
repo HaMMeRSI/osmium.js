@@ -1,5 +1,5 @@
-import { matchModifierName, matchFuncCall } from '../consts/regexes';
-import { resolveObjectKey, getAccessorFromString, assignByPath } from '../helpers/objectFunctions';
+import { matchModifierName, matchFuncCall, matchPrefixAttr } from '../consts/regexes';
+import { resolveObjectKey, getAccessorFromString } from '../helpers/objectFunctions';
 import { IModifierManager, IOsimChilds, IOsimNode, ModifierAction } from '../runtime-interfaces';
 import { OsimNode } from '../osim-node/OsimNode';
 
@@ -23,8 +23,9 @@ export default (modifierManager: IModifierManager) => (tagName: string = 'div', 
 	const dom = document.createElement(tagName);
 	const hONode = new OsimNode(dom, childs);
 
-	attrs.forEach(([attrName, value]): void => {
+	attrs.forEach(([prefixedAttrName, value]): void => {
 		const modifierAccessorNameMatch: RegExpMatchArray = value.match(matchModifierName);
+		const [, prefix, attrName] = prefixedAttrName.match(matchPrefixAttr);
 
 		if (modifierAccessorNameMatch) {
 			let modifierAccessorName = modifierAccessorNameMatch[0];
@@ -36,7 +37,7 @@ export default (modifierManager: IModifierManager) => (tagName: string = 'div', 
 				}
 			};
 
-			if (attrName.startsWith('@')) {
+			if (prefix === '@') {
 				action = (newAttrValue: (e) => void): void => {
 					// This test is because auto activate action
 					if (newAttrValue) {
@@ -45,7 +46,7 @@ export default (modifierManager: IModifierManager) => (tagName: string = 'div', 
 						const [, callee, strArgs] = matchFuncCall.exec(modifierAccessorName);
 						const args = strArgs ? strArgs.split(',') : [];
 						modifierAccessorName = callee;
-						dom.addEventListener(attrName.slice(1), (e) => {
+						dom.addEventListener(attrName, (e) => {
 							const nargs = args.map((arg) => {
 								const modifierNameMatch = arg.match(matchModifierName);
 								if (arg === '$event') {
@@ -61,6 +62,22 @@ export default (modifierManager: IModifierManager) => (tagName: string = 'div', 
 						});
 					}
 				};
+			} else {
+				if (!modifierManager.getModel(modifierAccessorName)) {
+					modifierManager.setModifier(modifierAccessorName, getDomAttr(dom, attrName));
+				}
+
+				if (prefix === ':') {
+					updateDomAttr(dom, attrName, modifierManager.getModel(modifierAccessorName));
+
+					const onChange = (e) => {
+						const targetProp = ['radio', 'checkbox'].includes((dom as HTMLInputElement).type) ? 'checked' : 'value';
+						modifierManager.setModifier(modifierAccessorName, e.target[targetProp]);
+					};
+
+					dom.addEventListener('change', onChange);
+					hONode.addRemover(() => dom.removeEventListener('change', onChange));
+				}
 			}
 
 			hONode.addRemover(modifierManager.addAction(modifierAccessorName, action));
