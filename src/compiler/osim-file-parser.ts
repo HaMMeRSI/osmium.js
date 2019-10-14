@@ -1,15 +1,29 @@
-import { importFile, importedElements, importStatement } from '../runtime/consts/regexes';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as acorn from 'acorn';
 import { OsimDocuments, IOsimDocument } from './compiler-interfaces';
 
 function processComponents(componentsPart: string) {
-	const imports = componentsPart.match(importStatement) || [];
-	const components = componentsPart.match(importedElements) || [];
-	return {
-		imports,
-		components,
-	};
+	const importDecs: any = acorn.parse(componentsPart, {
+		sourceType: 'module',
+		locations: false,
+	});
+
+	return importDecs.body.map((node) => {
+		if (node.type !== 'ImportDeclaration') {
+			throw new Error('Only import declerations are allowed in <components>');
+		}
+		const defaultSpecifier = node.specifiers.find((specifier) => specifier.type === 'ImportDefaultSpecifier');
+
+		if (!defaultSpecifier) {
+			throw new Error('Only default imports are allowed in <components>');
+		}
+
+		return {
+			source: node.source.value,
+			componentName: defaultSpecifier.local.name,
+		};
+	});
 }
 
 function extractPart(part, osimFileText): string {
@@ -26,19 +40,16 @@ function extractPart(part, osimFileText): string {
 
 function parseToDocument(currentOsimFileText, currentFilePath, osimDocuments: OsimDocuments): IOsimDocument {
 	const html = extractPart('template', currentOsimFileText);
-	const { imports, components } = processComponents(extractPart('components', currentOsimFileText));
+	const components = processComponents(extractPart('components', currentOsimFileText));
 
-	if (imports.length > 0) {
-		for (const imported of imports) {
-			const filePath: string = imported.match(importFile)[0];
-			const compName: string = imported.match(importedElements)[0];
-
+	if (components.length > 0) {
+		components.forEach(({ source, componentName }) => {
 			if (!Object.values(osimDocuments).find((doc: IOsimDocument): boolean => doc.path === currentFilePath)) {
-				const pathR = path.resolve(path.dirname(currentFilePath), filePath);
+				const pathR = path.resolve(path.dirname(currentFilePath), source);
 				const file = fs.readFileSync(pathR).toString();
-				osimDocuments[compName] = parseToDocument(file, pathR, osimDocuments);
+				osimDocuments[componentName] = parseToDocument(file, pathR, osimDocuments);
 			}
-		}
+		});
 	}
 
 	return {

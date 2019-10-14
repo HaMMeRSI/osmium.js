@@ -5,6 +5,7 @@ import { emitJsFiles } from './src/compiler/js/emit-js';
 const rootOsimComponent = `
 <components>
 	import c1 from './components/osim3-component.om';
+	import c2 from './components/osim3-component.om';
 </components>
 
 <template>
