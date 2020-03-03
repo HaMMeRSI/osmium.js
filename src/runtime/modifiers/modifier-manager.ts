@@ -35,7 +35,7 @@ export default (): IModifierManager => {
 			return assignByPath(modifiers[componentUid], modifierAccessorName, value);
 		},
 		addAction(modifierName: string, modifierAction: ModifierAction) {
-			const [componentUid, modifierAccessorName] = modifierName.split('_');
+			const [componentUid, modifierAccessorName] = modifierName.split(componentScopeDelimiter);
 			let currModel = modelCollection.get(componentUid);
 
 			if (!effectsCollection.has(componentUid)) {
@@ -43,7 +43,7 @@ export default (): IModifierManager => {
 				modelCollection.set(componentUid, Object.create(null));
 			}
 
-			const properties = splitObjectAccessor(modifierAccessorName.split('(')[0]);
+			const properties = splitObjectAccessor(modifierAccessorName);
 			const effect = properties.reduce((currEffect: IEffect, key: string) => {
 				if (!(key in currEffect)) {
 					currEffect[key] = createBaseEffect();
@@ -64,7 +64,7 @@ export default (): IModifierManager => {
 			return () => effect.$actions.splice(effect.$actions.indexOf(modifierAction), 1);
 		},
 		addListener(modifierName, func) {
-			const [componentUid, modifierAccessorName] = modifierName.split('_');
+			const [componentUid, modifierAccessorName] = modifierName.split(componentScopeDelimiter);
 			let currModel = modelCollection.get(componentUid);
 
 			if (!effectsCollection.has(componentUid)) {
@@ -72,7 +72,7 @@ export default (): IModifierManager => {
 				modelCollection.set(componentUid, Object.create(null));
 			}
 
-			const properties = splitObjectAccessor(modifierAccessorName.split('(')[0]);
+			const properties = splitObjectAccessor(modifierAccessorName);
 			const effect = properties.reduce((currEffect: IEffect, key: string) => {
 				if (!(key in currEffect)) {
 					currEffect[key] = createBaseEffect();

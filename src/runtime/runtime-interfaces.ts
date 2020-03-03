@@ -42,4 +42,4 @@ export interface IOsimNode {
 }
 
 export type IOsimChilds = IOsimNode[];
-export type EvaluationFunction = () => IOsimChilds;
+export type EvaluationFunction = (uid) => IOsimChilds;

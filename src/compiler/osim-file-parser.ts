@@ -40,10 +40,10 @@ function extractPart(part, osimFileText): string {
 
 function parseToDocument(currentOsimFileText, currentFilePath, osimDocuments: OsimDocuments): IOsimDocument {
 	const html = extractPart('template', currentOsimFileText);
-	const components = processComponents(extractPart('components', currentOsimFileText));
+	const usedComponents = processComponents(extractPart('components', currentOsimFileText));
 
-	if (components.length > 0) {
-		components.forEach(({ source, componentName }) => {
+	if (usedComponents.length > 0) {
+		usedComponents.forEach(({ source, componentName }) => {
 			if (!Object.values(osimDocuments).find((doc: IOsimDocument): boolean => doc.path === currentFilePath)) {
 				const pathR = path.resolve(path.dirname(currentFilePath), source);
 				const file = fs.readFileSync(pathR).toString();
@@ -55,7 +55,7 @@ function parseToDocument(currentOsimFileText, currentFilePath, osimDocuments: Os
 	return {
 		path: currentFilePath,
 		html,
-		components,
+		usedComponents: usedComponents.map((component) => component.componentName),
 		script: extractPart('script', currentOsimFileText).trim(),
 		style: extractPart('style', currentOsimFileText).trim(),
 	};

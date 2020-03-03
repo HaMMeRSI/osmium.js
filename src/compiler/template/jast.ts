@@ -79,15 +79,17 @@ export function breakCondition(condition: string, identifierResolver: Identifier
 export function extractFunctionItems(func: string, identifierResolver: IdentifierResolver) {
 	const program: any = acorn.parse(func);
 	const exper = program.body[0].expression;
-	let callee = exper.callee;
-	let args = [];
+	let callee = null;
+	let args = null;
+
 	if (exper.type === 'Identifier') {
 		callee = identifierResolver(exper.name);
-	} else if (exper.type === 'MemberExpression') {
-		callee = buildModifierAccessor(exper, identifierResolver);
 	} else {
-		callee = identifierResolver(callee.name);
-		args = exper.arguments.map((arg) => buildModifierAccessor(arg, identifierResolver));
+		callee = buildModifierAccessor(exper.callee, identifierResolver);
+
+		if (exper.type === 'CallExpression') {
+			args = exper.arguments.map((arg) => buildModifierAccessor(arg, identifierResolver));
+		}
 	}
 
 	return {

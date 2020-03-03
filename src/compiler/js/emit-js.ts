@@ -1,16 +1,19 @@
-import { OsimDocuments, IHast } from '../compiler-interfaces';
+import { OsimDocuments } from '../compiler-interfaces';
 import * as fs from 'fs';
 import * as path from 'path';
-import { collapseOsimDocument } from '../template/collapse-template';
 import buildComponent from '../template/build-component';
+import { reduceDocuments, IReducedDocuments } from '../template/reduce-documents';
 
 function getOsimScriptPath(currPath) {
 	return `${path.basename(currPath, path.extname(currPath))}.js`;
 }
 
 function buildOsimEntry(osimComponents: OsimDocuments, output: string): void {
-	const hast: IHast = collapseOsimDocument(osimComponents);
-	const componentString = buildComponent(hast);
+	const reducedDocuments: IReducedDocuments = reduceDocuments(osimComponents);
+	// const hast: IHast = collapseOsimDocument(osimComponents);
+	const componenstString = Object.entries(reducedDocuments).reduce((acc, [componentName, componentMeta]) => {
+		return acc.concat([[`${componentName}_`, buildComponent(componentMeta)]]);
+	}, []);
 
 	const importStrings = [];
 	for (const [name, value] of Object.entries(osimComponents)) {
@@ -38,9 +41,12 @@ export default (options) => {
 	const o_t = o_tt(modifierManager);
 	const o_f = o_ff(funcs, modifierManager);
 	const o_i = o_ii(funcs, modifierManager);
+	let o_runner = 0;
+	const o_id = (p) => \`\${p}\${o_runner++}\`;
 
 	const target = document.getElementById(options.target);
-	const osim = ${componentString}(target,funcs,modifierManager);
+	${componenstString.map(([componentName, str]) => `const ${componentName} = ${str};`).join('\n\t')}
+	o_o(root_({}, 'root'), 'root')(target,funcs,modifierManager);
 }`;
 
 	fs.writeFileSync(`${output}/osim-entry.js`, entryFile);

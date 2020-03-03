@@ -7,8 +7,8 @@ export type IEffect = IEffectKeys & {
 	$actions: ModifierAction[];
 	$listeners: (() => void)[];
 };
-export function createBaseEffect(): IEffect {
-	const effect = Object.create(null);
+export function createBaseEffect(type: string = 'object'): IEffect {
+	const effect = type === 'object' ? Object.create(null) : [];
 	effect.$actions = [];
 	effect.$listeners = [];
 
@@ -30,7 +30,7 @@ export function initAllEffects(model, effects) {
 	if (typeof model === 'object') {
 		Object.keys(model).forEach((key) => {
 			if (!(key in effects)) {
-				effects[key] = createBaseEffect();
+				effects[key] = createBaseEffect(typeof model[key]);
 			}
 
 			initAllEffects(model[key], effects[key]);

@@ -5,12 +5,30 @@ import { emitJsFiles } from './src/compiler/js/emit-js';
 const rootOsimComponent = `
 <components>
 	import c1 from './components/osim3-component.om';
-	import c2 from './components/osim3-component.om';
 </components>
 
 <template>
+	testText: {{someMod.a.b}}<br/>
+	<button  @click="{{showawa.a($event)}}">te</button>
 	<osim for="(item, i) in items">
-		<c1 todo="{{item}}" @ondelete="{{deleteItem(index)}}"></c1>
+		<c1 todo="{{i}}" tata="{{item}}" @ondelete="{{deleteItem(i)}}"></c1>
+		{{items[i]}}
+		<osim if="wer.a === 3">
+			fwe
+		</osim>
+		<osim for="q in items[i]">
+			{{q}}
+		</osim>
+		name: {{item.name.a}}
+		<osim if="!items[i]===3">
+			wef 3
+		</osim>
+		<osim for="(key, j) in item">
+			<button name="{{key}}" id="wefwfe" @click="{{show(key,i)}}" class={{dssd}}>{{j}}</button>
+		</osim>
+		<osim if="item.a === 3 || item === 2 && items === 23">
+			efwe:{{item}}, {{items}}, {{i}}
+		</osim>
 	</osim>
 </template>
 
@@ -25,23 +43,31 @@ const osimComponents: OsimDocuments = parseRootDocument(rootOsimComponent, rootC
 emitJsFiles(osimComponents, osimOutputPath);
 //	import c1 from './components/osim3-component.om';
 /*
-	testText: {{someMod.a.b}}<br/>
-		<button  @click="{{showawa($event)}}">te</button>
+testText: {{someMod.a.b}}<br/>
+	<button  @click="{{showawa($event)}}">te</button>
+	<osim for="(item, i) in items">
+		<osim if="wer.a === 3">
+			fwe
+		</osim>
+		<osim for="q in items[i]">
+			{{q}}
+		</osim>
+		name: {{item.name.a}}
+		<osim if="!items[i]===3">
+			wef 3
+		</osim>
+		<osim for="(key, j) in item">
+			<button name="{{key}}" id="wefwfe" @click="{{show(key,i)}}" class={{dssd}}>{{j}}</button>
+		</osim>
+		<osim if="item.a === 3 || item === 2 && items === 23">
+			efwe:{{item}}, {{items}}, {{i}}
+		</osim>
+</osim>
+		
 		<osim for="(item, i) in items">
-			<osim if="wer.a === 3">
-				fwe
-			</osim>
-			<osim for="q in items[i]">
-				{{q}}
-			</osim>
-			name: {{item.name.a}}
-			<osim if="!items[i]===3">
-				wef 3
-			</osim>
-			<osim for="(key, j) in item">
-				<button name="{{key}}" id="wefwfe" @click="{{show(key,i)}}" class={{dssd}}>{{j}}</button>
-			</osim>
-			<osim if="item.a === 3 || item === 2 && items === 23">
-				efwe:{{item}}, {{items}}, {{i}}
-			</osim>
-		</osim>*/
+		<div>{{item[i]}}</div>	
+		<c1 todo="{{item}}" @ondelete="{{deleteItem(index)}}"></c1>
+	</osim>
+	
+	
+	*/

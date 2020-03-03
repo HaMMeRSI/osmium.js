@@ -1,13 +1,12 @@
-import { IOsimChilds, IOsimNode, IModifierManager } from '../runtime-interfaces';
+import { ComponentUid, EvaluationFunction } from '../runtime-interfaces';
+import { IOsimNode, IModifierManager } from '../runtime-interfaces';
 import { OsimComponentNode } from '../osim-node/OsimComponentNode';
 import { OsimNodeAttrs } from '../../common/interfaces';
-import { OSIM_UID } from '../../compiler/template/consts';
 
-export default (modifierManager: IModifierManager) => (componentName: string, attrs: OsimNodeAttrs, childs: IOsimChilds): IOsimNode => {
-	const ocNode = new OsimComponentNode(componentName, attrs, childs);
-	const uid = attrs.find(([name]): boolean => name === OSIM_UID)[1];
+export default (modifierManager: IModifierManager) => (componentName: string, componentUid: ComponentUid, attrs: OsimNodeAttrs, childs: EvaluationFunction): IOsimNode => {
+	const ocNode = new OsimComponentNode(componentName, componentUid, attrs, childs(componentUid));
 	ocNode.addRemover(() => {
-		modifierManager.removeComponent(uid);
+		modifierManager.removeComponent(componentUid);
 	});
 
 	return ocNode;

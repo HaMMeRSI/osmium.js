@@ -1,5 +1,6 @@
 export const splitObjectAccessor = (path: string, separator = '.') => {
 	return path
+		.split('(')[0]
 		.replace(/\[/g, '.')
 		.replace(/\]/g, '')
 		.split(separator);

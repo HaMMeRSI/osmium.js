@@ -1,20 +1,19 @@
-import { IRuntimeModifiers } from './runtimeModifiers';
-import { IOastModifier, IResolvedProps } from '../compiler-interfaces';
+import { IOastModifier } from '../compiler-interfaces';
 import { extractModifierName } from './match';
 import { matchModifierName, matchFullModifierName } from '../../runtime/consts/regexes';
 import { extractLoopItems, extractFunctionItems, breakCondition, buildMemberExpression } from './jast';
 import { ITextExpression, ILiteral, ILoopStatement, IConditionStatement, ICallExpression, IOastBase } from '../oast-interfaces';
 
 export enum ENUM_OAST_TYPES {
-	TextExpression = 'TextExpression',
-	LoopStatement = 'LoopStatement',
-	ConditionStatement = 'ConditionStatement',
-	CallExpression = 'CallExpression',
-	MemberExpression = 'MemberExpression',
-	Modifier = 'Modifier',
-	Literal = 'Literal',
-	RuntimeModifier = 'RuntimeModifier',
-	RuntimePrimitive = 'RuntimePrimitive',
+	TextExpression,
+	LoopStatement,
+	ConditionStatement,
+	CallExpression,
+	MemberExpression,
+	Modifier,
+	Literal,
+	RuntimeModifier,
+	RuntimePrimitive,
 }
 
 export function createOastLiteral(value: string | number): ILiteral {
@@ -24,34 +23,12 @@ export function createOastLiteral(value: string | number): ILiteral {
 	};
 }
 
-export function oastBuilder(runtimeModifiers: IRuntimeModifiers, parentProps: IResolvedProps, currentComponentScope: string) {
-	function resolveModifier(modifierAccessorName: string): IOastModifier {
-		const modifierName = modifierAccessorName.split('.')[0];
-		const runtimeMatch = runtimeModifiers.find(modifierName);
-		const oastModifier: IOastModifier = {
-			type: ENUM_OAST_TYPES.Modifier,
-			value: modifierAccessorName,
-			scope: currentComponentScope,
-		};
-
-		if (modifierName in parentProps.staticProps) {
-			oastModifier.type = ENUM_OAST_TYPES.Literal;
-			oastModifier.value = parentProps.staticProps[modifierName].value;
-		} else if (runtimeMatch) {
-			oastModifier.type = runtimeMatch.type;
-		} else if (modifierName in parentProps.dynamicProps) {
-			oastModifier.scope = parentProps.dynamicProps[modifierName].componentScope;
-			oastModifier.value = parentProps.dynamicProps[modifierName].value;
-		}
-
-		return oastModifier;
-	}
-
-	function buildOastTextExpression(id: string, fullModifier: string): ITextExpression {
+export function initOastBuilder(resolveModifier: (modifierAccessorName: string, type?: ENUM_OAST_TYPES, isRuntime?: boolean) => IOastModifier) {
+	function buildOastTextExpression(id: string, text: string): ITextExpression {
 		return {
 			id,
 			type: ENUM_OAST_TYPES.TextExpression,
-			parts: fullModifier.split(matchFullModifierName).map((part: string) => {
+			parts: text.split(matchFullModifierName).map((part: string) => {
 				const modifierAccessorName = extractModifierName(matchModifierName, part);
 				if (modifierAccessorName) {
 					return buildMemberExpression(modifierAccessorName, resolveModifier);
@@ -71,8 +48,8 @@ export function oastBuilder(runtimeModifiers: IRuntimeModifiers, parentProps: IR
 		return {
 			id,
 			type: ENUM_OAST_TYPES.LoopStatement,
-			loopKey: runtimeModifiers.add(loopKey, currentComponentScope, ENUM_OAST_TYPES.RuntimePrimitive),
-			loopValue: runtimeModifiers.add(loopValue, currentComponentScope, ENUM_OAST_TYPES.RuntimeModifier),
+			loopKey: resolveModifier(loopKey, ENUM_OAST_TYPES.RuntimePrimitive, true).value,
+			loopValue: resolveModifier(loopValue, ENUM_OAST_TYPES.RuntimeModifier, true).value,
 			loopItem,
 		};
 	}

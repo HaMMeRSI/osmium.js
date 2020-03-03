@@ -14,7 +14,7 @@ export interface IOsimTemplateObject {
 export interface IOsimDocument {
 	path: string;
 	html: string;
-	components: string[];
+	usedComponents: string[];
 	script: string;
 	style: string;
 }
@@ -34,7 +34,6 @@ export interface IResolvedProps {
 }
 
 export interface IOastModifier {
-	scope: string;
 	value: string;
 	type: ENUM_OAST_TYPES;
 }
@@ -49,6 +48,7 @@ export interface IHast {
 	attrs: IHastAttribute[];
 	childNodes: IHast[];
 	value?: string;
+	isComponent: boolean;
 }
 
 export interface ILoopItems {

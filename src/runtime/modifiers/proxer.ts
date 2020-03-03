@@ -12,6 +12,10 @@ export function createProxer(model, effects) {
 				if (['splice', 'push', 'pop'].includes(prop as string)) {
 					return (...args) => {
 						const result = model[prop].call(model, ...args);
+						if (['splice', 'pop'].includes(prop as string)) {
+							effects[prop].call(model, ...args);
+						}
+						initAllEffects(model, effects);
 						effects.$listeners.forEach((listener) => listener());
 						return result;
 					};
@@ -31,7 +35,7 @@ export function createProxer(model, effects) {
 				initAllEffects(model[prop], effects[prop]);
 				callAllEffects(model[prop], effects[prop]);
 			} else {
-				effects[prop] = createBaseEffect();
+				effects[prop] = createBaseEffect(typeof model[prop]);
 				initAllEffects(model[prop], effects[prop]);
 			}
 

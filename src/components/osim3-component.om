@@ -1,5 +1,9 @@
 <template>
 	<input type="combobox" :checked="{{todo.completed}}" />
+	<button @click="{{ondelete(0)}}">delete</button>
+	<button @click="{{ondelete(1)}}">delete</button>
+	<button @click="{{ondelete(yo)}}">delete</button>
+	{{hello}}
 </template>
 
 <script>

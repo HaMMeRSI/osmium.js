@@ -1,1 +1,1 @@
-export const componentScopeDelimiter = '_';
+export const componentScopeDelimiter = '::';
